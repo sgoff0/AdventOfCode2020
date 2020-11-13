@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "dotenv": "^8.2.0",
+    "get-caller-file": "^2.0.5",
     "source-map-support": "^0.5.19",
     "tracer": "^1.1.3"
   }
