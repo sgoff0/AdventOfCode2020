@@ -1,5 +1,6 @@
 import * as path from 'path';
 import clipboardy from 'clipboardy';
+import axios from 'axios';
 
 export default {
   description: 'Add new aoc day',
@@ -32,6 +33,7 @@ export default {
   actions: (data) => {
     const { year, day } = data;
     const formattedYear = Number(year).toString();
+    const integerDay = Number(day);
     const formattedDay = Number(day).toString().padStart(2, '0');
 
     const actions = [];
@@ -45,6 +47,15 @@ export default {
       templateFile: './aoc/index.ts.hbs',
       abortOnFail: true,
     });
+
+    // TODO network call to https://adventofcode.com/2018/day/2/input
+    const url = `https://adventofcode.com/${formattedYear}/day/${integerDay}/input`;
+    data.url = url;
+    console.log('URL: ', url);
+    actions.push({
+      type: 'fetchUrlData',
+    });
+
     actions.push({
       type: 'add',
       path: path.resolve(pathToYearANdDay, 'input.txt'),
