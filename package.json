@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon",
-    "generate": "ts-node src/internals/generator/plopfile.ts",
+    "generate": "plop --plopfile ./src/internals/generator/index.ts aoc",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prettier:check": "prettier --check .",
@@ -36,6 +36,7 @@
   "dependencies": {
     "@types/node": "^14.14.7",
     "assert": "^2.0.0",
+    "clipboardy": "^2.3.0",
     "dotenv": "^8.2.0",
     "get-caller-file": "^2.0.5",
     "source-map-support": "^0.5.19",
