@@ -48,9 +48,8 @@ function functionB(lines: string[]): string {
   let matchText = '';
   const processedLines = [];
   lines.forEach((line) => {
-    let charactersMatched = 0;
-
     for (const processedLine of processedLines) {
+      let charactersMatched = 0;
       const mismatchIndexes = [];
       for (let i = 0; i < line.length; i++) {
         if (line.charAt(i) === processedLine.charAt(i)) {
@@ -66,7 +65,9 @@ function functionB(lines: string[]): string {
         // console.log(`Best match is: ${line} and ${processedLine} with mismatch on ${mismatchIndexes}`);
         bestMatch = charactersMatched;
         matchText = `${line.slice(0, mismatchIndexes[0])}${line.slice(mismatchIndexes[0] + 1, line.length)}`;
-        console.log(`Match on ${line} and ${processedLine} has mismatch on ${mismatchIndexes}`);
+        console.log(
+          `Match on ${charactersMatched} characters for ${line} and ${processedLine} has mismatch on ${mismatchIndexes}`,
+        );
       }
     }
 
