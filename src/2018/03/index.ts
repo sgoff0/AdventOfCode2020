@@ -55,7 +55,6 @@ function functionA(lines: string[]): number {
   });
 
   const values = Array.from(claimMap.values());
-  // console.log('Values: ', values);
 
   const overlap = values.reduce((prev, curr) => {
     return curr > 1 ? prev + 1 : prev;
@@ -64,8 +63,44 @@ function functionA(lines: string[]): number {
   return overlap;
 }
 
-function functionB(values: number[]): number {
-  return 0;
+function functionB(lines: string[]): number {
+  const parsedInput = parseInput(lines);
+
+  const claimMap = new Map();
+  const cleanClaim = {};
+
+  parsedInput.forEach((claim) => {
+    // Init clean claim for each id
+    cleanClaim[claim.id] = true;
+
+    // Set which claims exist
+    for (let x = 0; x < claim.width; x++) {
+      for (let y = 0; y < claim.height; y++) {
+        const key = `${x + claim.startX}_${y + claim.startY}`;
+        const claims: number[] = claimMap.get(key) || [];
+        claims.push(claim.id);
+        claimMap.set(key, claims);
+      }
+    }
+  });
+
+  const values = Array.from(claimMap.values());
+
+  values.forEach((value) => {
+    if (value.length > 1) {
+      value.forEach((item) => {
+        cleanClaim[item] = false;
+      });
+    }
+  });
+
+  let retVal;
+  Object.keys(cleanClaim).forEach((id) => {
+    if (cleanClaim[id] === true) {
+      retVal = id;
+    }
+  });
+  return retVal;
 }
 
 /* Tests */
@@ -78,8 +113,8 @@ function functionB(values: number[]): number {
 
 console.time('Time');
 const resultA = functionA(input);
-// const resultB = functionB(input);
+const resultB = functionB(input);
 console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultA);
-// console.log('Solution to part 2:', resultB);
+console.log('Solution to part 2:', resultB);
