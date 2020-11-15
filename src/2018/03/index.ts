@@ -40,7 +40,8 @@ function functionA(lines: string[]): number {
 
   console.log('1');
   const claimMap = new Map();
-  const altMap = {};
+  //   const altMap = {};
+  const fabric: Map<string, number[]> = new Map<string, number[]>(); // Contains each claim for each coordinate
 
   let iteration = 0;
   parsedInput.forEach((claim) => {
@@ -52,14 +53,18 @@ function functionA(lines: string[]): number {
     }
     for (let x = claim.startX; x < claim.startX + claim.width; x++) {
       for (let y = claim.startY; y < claim.startY + claim.height; y++) {
+        const coordKey = `${x}_${y}`;
+        const claims: number[] = fabric.get(coordKey) || [];
+        claims.push(claim.id);
+        fabric.set(coordKey, claims);
         // const value = claimMap.get(`${x}_${y}`);
-        const key = `${x}_${y}`;
+        // const key = `${x}_${y}`;
 
-        if (value != undefined) {
-          claimMap.set(`${x}_${y}`, value + 1);
-        } else {
-          claimMap.set(`${x}_${y}`, 1);
-        }
+        // if (value != undefined) {
+        //   claimMap.set(`${x}_${y}`, value + 1);
+        // } else {
+        //   claimMap.set(`${x}_${y}`, 1);
+        // }
 
         // if (key in altMap) {
         // altMap[key] += 1;
