@@ -22,7 +22,7 @@ function parseInput(lines: string[]): Claim[] {
     if (matches == null) {
       return;
     }
-    const [all, id, width, height, startX, startY] = matches;
+    const [all, id, startX, startY, width, height] = matches;
     // console.log('Matches: ' + claim);
     retVal.push({
       id: Number(id),
@@ -38,52 +38,29 @@ function parseInput(lines: string[]): Claim[] {
 function functionA(lines: string[]): number {
   const parsedInput = parseInput(lines);
 
-  console.log('1');
   const claimMap = new Map();
-  //   const altMap = {};
-  const fabric: Map<string, number[]> = new Map<string, number[]>(); // Contains each claim for each coordinate
 
-  let iteration = 0;
   parsedInput.forEach((claim) => {
-    iteration += 1;
-    // console.log(`ID: ${claim.id}`);
-    if (iteration % 10 === 0) {
-      // console.log()
-      console.log(`ID: ${claim.id}`);
-    }
-    for (let x = claim.startX; x < claim.startX + claim.width; x++) {
-      for (let y = claim.startY; y < claim.startY + claim.height; y++) {
-        const coordKey = `${x}_${y}`;
-        const claims: number[] = fabric.get(coordKey) || [];
-        claims.push(claim.id);
-        fabric.set(coordKey, claims);
-        // const value = claimMap.get(`${x}_${y}`);
-        // const key = `${x}_${y}`;
-
-        // if (value != undefined) {
-        //   claimMap.set(`${x}_${y}`, value + 1);
-        // } else {
-        //   claimMap.set(`${x}_${y}`, 1);
-        // }
-
-        // if (key in altMap) {
-        // altMap[key] += 1;
-        // } else {
-        //   altMap[key] = 1;
-        // }
+    for (let x = 0; x < claim.width; x++) {
+      for (let y = 0; y < claim.height; y++) {
+        const key = `${x + claim.startX}_${y + claim.startY}`;
+        const value = claimMap.get(key);
+        if (value != undefined) {
+          claimMap.set(key, value + 1);
+        } else {
+          claimMap.set(key, 1);
+        }
       }
     }
   });
 
-  console.log('2');
   const values = Array.from(claimMap.values());
+  // console.log('Values: ', values);
 
-  console.log('3');
   const overlap = values.reduce((prev, curr) => {
     return curr > 1 ? prev + 1 : prev;
   }, 0);
 
-  console.log('4');
   return overlap;
 }
 
