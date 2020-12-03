@@ -48,10 +48,7 @@ export default {
       abortOnFail: true,
     });
 
-    // TODO network call to https://adventofcode.com/2018/day/2/input
-    const url = `https://adventofcode.com/${formattedYear}/day/${integerDay}/input`;
-    data.url = url;
-    console.log('URL: ', url);
+    data.url = `https://adventofcode.com/${formattedYear}/day/${integerDay}/input`;
     actions.push({
       type: 'fetchUrlData',
     });
