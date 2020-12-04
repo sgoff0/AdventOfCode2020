@@ -70,15 +70,9 @@ function isValidHeight(input: string, metric: string, min: number, max: number) 
   return isValid;
 }
 
-function isValidHairColor(input: string) {
-  return input?.match(hairColorRE);
-}
-function isValidEyeColor(input: string) {
-  return validEyeColors.includes(input);
-}
-function isValidPassportID(input: string) {
-  return input?.match(passportIDRE);
-}
+const isValidHairColor = (input: string) => input?.match(hairColorRE);
+const isValidEyeColor = (input: string) => validEyeColors.includes(input);
+const isValidPassportID = (input: string) => input?.match(passportIDRE);
 
 function isValidPart2(chunk) {
   const data = processChunk(chunk);
