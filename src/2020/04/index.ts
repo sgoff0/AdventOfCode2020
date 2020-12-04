@@ -43,7 +43,7 @@ function validate(data) {
 const heightRE = /(\d+)(\w+)/;
 const hairColorRE = /#[0-9a-f]{6}$/;
 const validEyeColors = ['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth'];
-const passportIDRE = /\d{6}$/;
+const passportIDRE = /^\d{9}$/;
 
 function isValidPart2(chunk) {
   let isValid = true;
@@ -105,7 +105,7 @@ function isValidPart2(chunk) {
 
   const pid = data['pid'];
   const matchesPassport = passportIDRE.exec(pid);
-  if (!matchesPassport || pid.length !== 9) {
+  if (!matchesPassport) {
     // GRRRR my regex matched 6 fine but didn't fail if it was longer
     isValid = false;
   }
