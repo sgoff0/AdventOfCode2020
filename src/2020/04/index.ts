@@ -44,39 +44,24 @@ const heightRE = /(\d+)(\w+)/;
 const hairColorRE = /#[0-9a-f]{6}$/;
 const validEyeColors = ['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth'];
 const passportIDRE = /^\d{9}$/;
-
 function isNumberInRange(input: string, min: number, max: number) {
-  let isValid = false;
   const parsed = parseInt(input, 10);
-  if (!isNaN(parsed) && parsed >= min && parsed <= max) {
-    isValid = true;
-  }
-
-  return isValid;
+  return !isNaN(parsed) && parsed >= min && parsed <= max;
 }
-
 function isValidHeight(input: string, metric: string, min: number, max: number) {
-  let isValid = false;
-
   const matches = heightRE.exec(input);
-
   if (matches) {
     const [_, heightValueString, measurement] = matches;
     const heightValue = parseInt(heightValueString, 10);
-    if (measurement === metric && !isNaN(heightValue) && heightValue >= min && heightValue <= max) {
-      isValid = true;
-    }
+    return measurement === metric && !isNaN(heightValue) && heightValue >= min && heightValue <= max;
   }
-  return isValid;
+  return false;
 }
-
 const isValidHairColor = (input: string) => input?.match(hairColorRE);
 const isValidEyeColor = (input: string) => validEyeColors.includes(input);
 const isValidPassportID = (input: string) => input?.match(passportIDRE);
-
 function isValidPart2(chunk) {
   const data = processChunk(chunk);
-
   return (
     isNumberInRange(data['byr'], 1920, 2002) &&
     isNumberInRange(data['iyr'], 2010, 2020) &&
