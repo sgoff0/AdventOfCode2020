@@ -45,76 +45,53 @@ const hairColorRE = /#[0-9a-f]{6}$/;
 const validEyeColors = ['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth'];
 const passportIDRE = /^\d{9}$/;
 
-function isValidPart2(chunk) {
-  let isValid = true;
-  let isMissingStuff = false;
-  const data = processChunk(chunk);
-  const valuesPresent = validate(data);
-  if (!valuesPresent) {
-    // console.log('Missing required values: ', data);
-    // isValid = false;
-    isMissingStuff = true;
-  }
-  //   if (valuesPresent) {
-  const byr = parseInt(data['byr'], 10);
-  if (!isFinite(byr) || byr < 1920 || byr > 2002 || data['byr'].length !== 4) {
-    isValid = false;
+function isNumberInRange(input: string, min: number, max: number) {
+  let isValid = false;
+  const parsed = parseInt(input, 10);
+  if (!isNaN(parsed) && parsed >= min && parsed <= max) {
+    isValid = true;
   }
 
-  const iyr = parseInt(data['iyr'], 10);
-  if (!isFinite(iyr) || iyr < 2010 || iyr > 2020 || data['iyr'].length !== 4) {
-    isValid = false;
-  }
+  return isValid;
+}
 
-  const eyr = parseInt(data['eyr'], 10);
-  //   console.log('EYR is : ', eyr);
-  if (!isFinite(eyr) || eyr < 2020 || eyr > 2030 || data['eyr'].length !== 4) {
-    isValid = false;
-  }
+function isValidHeight(input: string, metric: string, min: number, max: number) {
+  let isValid = false;
 
-  const hgt = data['hgt'];
-  const matches = heightRE.exec(hgt);
-  if (!matches) {
-    isValid = false;
-  } else {
+  const matches = heightRE.exec(input);
+
+  if (matches) {
     const [_, heightValueString, measurement] = matches;
     const heightValue = parseInt(heightValueString, 10);
-    if (measurement === 'cm') {
-      if (!isFinite(heightValue) || heightValue < 150 || heightValue > 193 || heightValueString.length !== 3) {
-        isValid = false;
-      }
-    } else if (measurement === 'in') {
-      if (!isFinite(heightValue) || heightValue < 59 || heightValue > 76 || heightValueString.length !== 2) {
-        isValid = false;
-      }
-    } else {
-      isValid = false;
+    if (measurement === metric && !isNaN(heightValue) && heightValue >= min && heightValue <= max) {
+      isValid = true;
     }
   }
-
-  const hcl = data['hcl'];
-  const matchesHair = hairColorRE.exec(hcl);
-  if (!matchesHair) {
-    isValid = false;
-  }
-
-  const ecl = data['ecl'];
-  if (!validEyeColors.includes(ecl)) {
-    isValid = false;
-  }
-
-  const pid = data['pid'];
-  const matchesPassport = passportIDRE.exec(pid);
-  if (!matchesPassport) {
-    // GRRRR my regex matched 6 fine but didn't fail if it was longer
-    isValid = false;
-  }
-  //   }
-
-  if (isMissingStuff && isValid) {
-    console.log(`Missing required values: ${chunk}`);
-  }
   return isValid;
+}
+
+function isValidHairColor(input: string) {
+  return input?.match(hairColorRE);
+}
+function isValidEyeColor(input: string) {
+  return validEyeColors.includes(input);
+}
+function isValidPassportID(input: string) {
+  return input?.match(passportIDRE);
+}
+
+function isValidPart2(chunk) {
+  const data = processChunk(chunk);
+
+  return (
+    isNumberInRange(data['byr'], 1920, 2002) &&
+    isNumberInRange(data['iyr'], 2010, 2020) &&
+    isNumberInRange(data['eyr'], 2020, 2030) &&
+    (isValidHeight(data['hgt'], 'cm', 150, 193) || isValidHeight(data['hgt'], 'in', 59, 76)) &&
+    isValidHairColor(data['hcl']) &&
+    isValidEyeColor(data['ecl']) &&
+    isValidPassportID(data['pid'])
+  );
 }
 
 function part1(lines: string[]): number {
@@ -127,7 +104,6 @@ function part1(lines: string[]): number {
       if (isValid(chunk)) {
         valid += 1;
       }
-      //   console.log(data);
       chunk = [];
     }
   });
@@ -147,7 +123,6 @@ function part2(lines: string[]): number {
       if (isValidPart2(chunk)) {
         valid += 1;
       }
-      //   console.log(data);
       chunk = [];
     }
   });
@@ -161,6 +136,19 @@ function part2(lines: string[]): number {
 /* Tests */
 
 // BYR
+assert.strictEqual(isNumberInRange('1920', 1920, 2002), true);
+assert.strictEqual(isNumberInRange('2002', 1920, 2002), true);
+assert.strictEqual(isNumberInRange('1919', 1920, 2002), false);
+assert.strictEqual(isNumberInRange('2003', 1920, 2002), false);
+assert.strictEqual(isNumberInRange('', 1920, 2002), false);
+
+assert.strictEqual(isValidHeight('74in', 'in', 59, 76), true);
+assert.strictEqual(isValidHeight('76in', 'in', 59, 76), true);
+assert.strictEqual(isValidHeight('59in', 'in', 59, 76), true);
+assert.strictEqual(isValidHeight('77in', 'in', 59, 76), false);
+assert.strictEqual(isValidHeight('58in', 'in', 59, 76), false);
+assert.strictEqual(isValidHeight('58inz', 'in', 59, 76), false);
+
 assert.strictEqual(part2([`pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980 hcl:#623a2f`]), 1);
 assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1920', 'hcl:#623a2f']), 1);
 assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1919', 'hcl:#623a2f']), 0);
