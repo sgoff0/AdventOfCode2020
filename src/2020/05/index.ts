@@ -69,18 +69,20 @@ function part1(values: string[]): number {
 }
 
 function part2(value: string[]): number {
-  // Sort all seats numerically
-  const seats = value.map(getSeatId).sort((a, b) => a - b);
-
-  // Ignoring front and back (and using it to clone the array so I'm not mutating my source array), work from right to left to find the first missing spot (where right - left > 1)
-  const desired = seats.slice(1, seats.length - 1).reduceRight((p, c, idx, array) => {
-    if (p - c > 1) {
-      array.splice(0, seats.length); // ugly hack to early return by removing all elements from array we're on. Since I sliced it doens't modify seats but it's likely not clear to others.
-      return p - 1;
-    }
-    return c;
-  });
-  return desired;
+  return value
+    .map(getSeatId) // string to seat id
+    .sort((a, b) => b - a) // sort in reverse seat ID order
+    .slice(1, -1) // per problem ignore frontmost/backmost seat IDs as they won't be filled.  This also effectively clones the array so the hack in the reduce function won't mutate the original array
+    .reduce((previousSeatId, currentSeatId, currentArrayIndex, array) => {
+      // Per problem there should be only 1 missing number of an ordered list, reduce array until we find it
+      const expectedNextSeat = previousSeatId - 1;
+      if (currentSeatId === expectedNextSeat) {
+        return currentSeatId;
+      } else {
+        array.splice(0, array.length); // ugly hack to early return by removing all elements from array we're on. Since I sliced it doens't modify seats but it's likely not clear to others.
+        return expectedNextSeat;
+      }
+    });
 }
 
 assert.strictEqual(getCol('RLR'), 5);
