@@ -27,8 +27,8 @@ function part1(groups: string[]): number {
 function part2(groups: string[]): number {
   return groups
     .map((group) => {
-      const persons = group.split('\n');
-      return persons.reduce((prevousPerson, currentPerson) => {
+      const personsAnswers = group.split('\n');
+      return personsAnswers.reduce((prevousPerson, currentPerson) => {
         return intersect(prevousPerson.split(''), currentPerson.split('')).join('');
       }).length;
     })
