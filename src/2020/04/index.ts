@@ -3,12 +3,12 @@ import readInput from '../../utils/readInput';
 import assert from 'assert';
 
 const rawInput = readInput();
-const input = rawInput.split('\n');
+const input = rawInput.split('\n\n');
 
 /* Functions */
 
-function processChunk(chunk) {
-  const passportFields = chunk.join(' ').split(' ');
+function processLine(line: string) {
+  const passportFields = line.split(' ');
 
   const data = {};
 
@@ -23,8 +23,8 @@ function processChunk(chunk) {
   return data;
 }
 
-function isValid(chunk) {
-  const data = processChunk(chunk);
+function isValid(line: string) {
+  const data = processLine(line);
   return validate(data);
 }
 
@@ -60,8 +60,8 @@ function isValidHeight(input: string, metric: string, min: number, max: number) 
 const isValidHairColor = (input: string) => input?.match(hairColorRE);
 const isValidEyeColor = (input: string) => validEyeColors.includes(input);
 const isValidPassportID = (input: string) => input?.match(passportIDRE);
-function isValidPart2(chunk) {
-  const data = processChunk(chunk);
+function isValidPart2(line: string) {
+  const data = processLine(line);
   return (
     isNumberInRange(data['byr'], 1920, 2002) &&
     isNumberInRange(data['iyr'], 2010, 2020) &&
@@ -73,42 +73,25 @@ function isValidPart2(chunk) {
   );
 }
 
-function part1(lines: string[]): number {
-  let chunk = [];
+function part1(chunks: string[]): number {
   let valid = 0;
-  lines.forEach((line) => {
-    if (line.length > 0) {
-      chunk.push(line);
-    } else {
-      if (isValid(chunk)) {
-        valid += 1;
-      }
-      chunk = [];
+  chunks.forEach((chunk) => {
+    const line = chunk.split('\n').join(' ');
+    if (isValid(line)) {
+      valid += 1;
     }
   });
-  if (isValid(chunk)) {
-    valid += 1;
-  }
   return valid;
 }
 
-function part2(lines: string[]): number {
-  let chunk = [];
+function part2(chunks: string[]): number {
   let valid = 0;
-  lines.forEach((line) => {
-    if (line.length > 0) {
-      chunk.push(line);
-    } else {
-      if (isValidPart2(chunk)) {
-        valid += 1;
-      }
-      chunk = [];
+  chunks.forEach((chunk) => {
+    const line = chunk.split('\n').join(' ');
+    if (isValidPart2(line)) {
+      valid += 1;
     }
   });
-  if (isValidPart2(chunk)) {
-    valid += 1;
-  }
-
   return valid;
 }
 
@@ -128,55 +111,14 @@ assert.strictEqual(isValidHeight('77in', 'in', 59, 76), false);
 assert.strictEqual(isValidHeight('58in', 'in', 59, 76), false);
 assert.strictEqual(isValidHeight('58inz', 'in', 59, 76), false);
 
-assert.strictEqual(part2([`pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980 hcl:#623a2f`]), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1920', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1919', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:2003', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:2002', 'hcl:#623a2f']), 1);
-
-//IYR
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2010 eyr:2030 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2009 eyr:2030 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2021 eyr:2030 byr:1980', 'hcl:#623a2f']), 0);
-
-//eyr
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2010 eyr:2020 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2010 eyr:2019 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2020 eyr:2031 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2020 eyr:201 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2020 eyr:20100 byr:1980', 'hcl:#623a2f']), 0);
-
-assert.strictEqual(part2(['pid:544267207 cid:113 iyr:2015 hgt:181cm hcl:#6b5442 ecl:gry byr:1971']), 0);
-
-// hgt
-assert.strictEqual(part2(['pid:087499704 hgt:59in ecl:grn iyr:2010 eyr:2020 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:76in ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:58in ecl:grn iyr:2010 eyr:2020 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:77in ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 0);
-
-assert.strictEqual(part2(['pid:087499704 hgt:150cm ecl:grn iyr:2010 eyr:2020 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:193cm ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:149cm ecl:grn iyr:2010 eyr:2020 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:194cm ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:150am ecl:grn iyr:2020 eyr:2030 byr:1980', 'hcl:#623a2f']), 0);
-
-// hcl
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#000000']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#ffffff ']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#gggggg']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#01234']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#012345']), 1);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#01234567']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:#0123456']), 0);
-assert.strictEqual(part2(['pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980', 'hcl:012345']), 0);
-
 /* Results */
+
+assert.strictEqual(part1(input), 264);
+assert.strictEqual(part2(input), 224);
 
 console.time('Time');
 const resultPart1 = part1(input);
-const resultPart2 = part2(input); // not 259, not 227, not 226, not 229, 224
+const resultPart2 = part2(input);
 console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1);
