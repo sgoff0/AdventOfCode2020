@@ -80,22 +80,20 @@ function parseRootData(nodes: StringToTreeNode, input: string): TreeNode {
   }
 }
 
-function findBagCount(nodes: StringToTreeNode, name: string) {
-  return Object.values(nodes).reduce((total, val) => {
-    return total + (val.hasChildren(name) ? 1 : 0);
-  }, 0);
-}
-
 const bagToFind = 'shiny gold';
 function part1(): number {
   const nodes: StringToTreeNode = {};
   input.forEach((value) => parseRootData(nodes, value));
-  return findBagCount(nodes, bagToFind);
+
+  return Object.values(nodes).reduce((total, val) => {
+    return total + (val.hasChildren(bagToFind) ? 1 : 0);
+  }, 0);
 }
 
 function part2(): number {
   const nodes: StringToTreeNode = {};
   input.forEach((value) => parseRootData(nodes, value));
+
   return nodes[bagToFind].getNestedBags();
 }
 
