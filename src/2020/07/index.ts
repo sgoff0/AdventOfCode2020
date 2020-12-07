@@ -4,16 +4,7 @@ import assert from 'assert';
 const rawInput = readInput();
 const input = rawInput.split('\n');
 
-/* Globals */
-// Parse ones into tree structure as I can reuse for both problems
-const rootRE = /^(.*) bags contain (.*)/;
-const childRE = /(\d+) (.*) bag/;
-const nodes = {};
-
-/* Functions */
-
-const unique = (input: TreeNode[]): TreeNode[] => [...new Set(input)];
-
+/* Tree Data Type */
 class TreeNode {
   name: string;
   descendents: TreeNode[];
@@ -26,7 +17,7 @@ class TreeNode {
     if (depth > 0 && this.name === name) {
       return true;
     } else {
-      // No need to traverse dupliate children if we just want to know if one decendent exists
+      // Use unique to improve performance as there are many dupliate bags and I store everything in a tree
       return unique(this.descendents).some((child) => child.hasDescendent(name, depth + 1));
     }
   }
@@ -37,21 +28,13 @@ class TreeNode {
   }
 }
 
-function childToData(input: string) {
-  const matches = childRE.exec(input);
-  if (matches) {
-    const [_, quantity, bag] = matches;
-    return {
-      quantity,
-      bag,
-    };
-  } else {
-    console.warn('No match on ' + input);
-  }
-  return null;
-}
+type StringToTreeNode = Record<string, TreeNode>;
 
-function getOrCreateNode(name: string): TreeNode {
+/* Functions */
+const unique = (input: TreeNode[]): TreeNode[] => [...new Set(input)];
+
+// Maintain k:v pair of name: TreeNodes for reuse
+function getOrCreateNode(nodes: StringToTreeNode, name: string): TreeNode {
   if (nodes[name] == null) {
     const retVal = new TreeNode(name);
     nodes[name] = retVal;
@@ -61,63 +44,59 @@ function getOrCreateNode(name: string): TreeNode {
   }
 }
 
-function rootToData(input: string): TreeNode {
+const childRE = /(\d+) (.*) bag/;
+function parseChildData(input: string) {
+  const matches = childRE.exec(input);
+  if (matches) {
+    const [_, quantity, bag] = matches;
+    return {
+      quantity: parseInt(quantity, 10),
+      bag,
+    };
+  }
+  return null;
+}
+
+const rootRE = /^(.*) bags contain (.*)/;
+function parseRootData(nodes: StringToTreeNode, input: string): TreeNode {
   const matches = rootRE.exec(input);
   if (matches) {
     const [_, root, children] = matches;
-    // console.log('Root: ' + root);
-
-    const rootNode = getOrCreateNode(root);
-
+    const rootNode = getOrCreateNode(nodes, root);
     children.split(',').forEach((child) => {
-      const childData = childToData(child);
+      const childData = parseChildData(child);
       if (childData != null) {
-        // console.log(`  Child data: ${childData?.bag} (${childData?.quantity})`);
-        const childNode = getOrCreateNode(childData.bag);
-        const quantity = parseInt(childData.quantity, 10);
-        for (let i = 0; i < quantity; i++) {
+        const childNode = getOrCreateNode(nodes, childData.bag);
+        for (let i = 0; i < childData.quantity; i++) {
+          // I chose to make it pure tree so if you have 3 red bags I store 3 children that are red bags.
+          // otherwise I could have considered trying to maintain a relationship between count
           rootNode.descendents.push(childNode);
         }
       }
     });
     return rootNode;
   } else {
-    console.warn('No match on ' + input);
     return null;
   }
 }
 
-function findBagCount(name: string) {
-  let count = 0;
-  //   Object.entries(nodes).forEach((node) => {
-  for (const [key, node] of Object.entries(nodes)) {
-    const myNode: TreeNode = node as any;
-    // console.log('MyNode: ', myNode);
-    if (myNode.hasDescendent(name)) {
-      count += 1;
-    }
-    //   if (node.)
-    // console.log(node.entries);
-  }
-  return count;
+function findBagCount(nodes: StringToTreeNode, name: string) {
+  return Object.values(nodes).reduce((total, val) => {
+    return total + (val.hasDescendent(name) ? 1 : 0);
+  }, 0);
 }
 
-input.forEach((value) => {
-  rootToData(value);
-});
-
+const bagToFind = 'shiny gold';
 function part1(): number {
-  const count = findBagCount('shiny gold');
-  return count;
-
-  // Use linked lists for tree traversal, sorta like airport problem
+  const nodes: StringToTreeNode = {};
+  input.forEach((value) => parseRootData(nodes, value));
+  return findBagCount(nodes, bagToFind);
 }
 
 function part2(): number {
-  const myNode: TreeNode = nodes['shiny gold'] as any;
-  return myNode.getNestedBags();
-  //   const count = findBagCount('shiny gold');
-  //   return 0;
+  const nodes: StringToTreeNode = {};
+  input.forEach((value) => parseRootData(nodes, value));
+  return nodes[bagToFind].getNestedBags();
 }
 
 /* Tests */
