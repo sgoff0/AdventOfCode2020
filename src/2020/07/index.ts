@@ -13,18 +13,15 @@ class TreeNode {
     this.children = [];
   }
 
-  hasChildren(name: string, depth = 0) {
-    if (depth > 0 && this.name === name) {
-      return true;
-    } else {
-      // Use unique to improve performance as there are many dupliate bags and I store everything in a tree
-      return unique(this.children).some((child) => child.hasChildren(name, depth + 1));
-    }
+  hasChild(name: string, depth = 0): boolean {
+    return depth > 0 && this.name === name
+      ? true
+      : unique(this.children).some((child) => child.hasChild(name, depth + 1));
   }
 
-  getNestedBags(depth = 0) {
-    const selfWorth = depth > 0 ? 1 : 0; // root is worth 0, all other bags count
-    return this.children.reduce((p, c) => p + c.getNestedBags(depth + 1), 0) + selfWorth;
+  childBagCount(depth = 0): number {
+    const selfWorth = depth > 0 ? 1 : 0; // don't count root bag as child
+    return this.children.reduce((p, c) => p + c.childBagCount(depth + 1), 0) + selfWorth;
   }
 }
 
@@ -86,7 +83,7 @@ function part1(): number {
   input.forEach((value) => parseRootData(nodes, value));
 
   return Object.values(nodes).reduce((total, val) => {
-    return total + (val.hasChildren(bagToFind) ? 1 : 0);
+    return total + (val.hasChild(bagToFind) ? 1 : 0);
   }, 0);
 }
 
@@ -94,7 +91,7 @@ function part2(): number {
   const nodes: StringToTreeNode = {};
   input.forEach((value) => parseRootData(nodes, value));
 
-  return nodes[bagToFind].getNestedBags();
+  return nodes[bagToFind].childBagCount();
 }
 
 /* Tests */
