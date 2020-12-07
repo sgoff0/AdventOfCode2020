@@ -82,8 +82,8 @@ function part1(): number {
   const nodes: StringToTreeNode = {};
   input.forEach((value) => parseRootData(nodes, value));
 
-  return Object.values(nodes).reduce((total, val) => {
-    return total + (val.hasChild(bagToFind) ? 1 : 0);
+  return Object.values(nodes).reduce((total, node) => {
+    return total + (node.hasChild(bagToFind) ? 1 : 0);
   }, 0);
 }
 
