@@ -7,24 +7,24 @@ const input = rawInput.split('\n');
 /* Tree Data Type */
 class TreeNode {
   name: string;
-  descendents: TreeNode[];
+  children: TreeNode[];
   constructor(name: string) {
     this.name = name;
-    this.descendents = [];
+    this.children = [];
   }
 
-  hasDescendent(name: string, depth = 0) {
+  hasChildren(name: string, depth = 0) {
     if (depth > 0 && this.name === name) {
       return true;
     } else {
       // Use unique to improve performance as there are many dupliate bags and I store everything in a tree
-      return unique(this.descendents).some((child) => child.hasDescendent(name, depth + 1));
+      return unique(this.children).some((child) => child.hasChildren(name, depth + 1));
     }
   }
 
   getNestedBags(depth = 0) {
     const selfWorth = depth > 0 ? 1 : 0; // root is worth 0, all other bags count
-    return this.descendents.reduce((p, c) => p + c.getNestedBags(depth + 1), 0) + selfWorth;
+    return this.children.reduce((p, c) => p + c.getNestedBags(depth + 1), 0) + selfWorth;
   }
 }
 
@@ -70,7 +70,7 @@ function parseRootData(nodes: StringToTreeNode, input: string): TreeNode {
         for (let i = 0; i < childData.quantity; i++) {
           // I chose to make it pure tree so if you have 3 red bags I store 3 children that are red bags.
           // otherwise I could have considered trying to maintain a relationship between count
-          rootNode.descendents.push(childNode);
+          rootNode.children.push(childNode);
         }
       }
     });
@@ -82,7 +82,7 @@ function parseRootData(nodes: StringToTreeNode, input: string): TreeNode {
 
 function findBagCount(nodes: StringToTreeNode, name: string) {
   return Object.values(nodes).reduce((total, val) => {
-    return total + (val.hasDescendent(name) ? 1 : 0);
+    return total + (val.hasChildren(name) ? 1 : 0);
   }, 0);
 }
 
