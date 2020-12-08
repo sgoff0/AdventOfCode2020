@@ -63,19 +63,19 @@ class BootCode {
   }
 
   public run(): Result {
-    this.checkExitCodes();
-    if (this.exitCode === undefined) {
-      this.step();
-      return this.run();
-    } else {
+    this.setPotentialExitCode();
+
+    if (this.exitCode !== undefined) {
       return {
         exitCode: this.exitCode,
         accumulator: this.accumulator,
       };
     }
+    this.step();
+    return this.run();
   }
 
-  private checkExitCodes() {
+  private setPotentialExitCode() {
     if (this.index >= this.instructions.length) {
       this.exitCode = ExitCode.EOF;
     } else if (this.duplicates.has(this.index)) {
