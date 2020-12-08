@@ -100,13 +100,21 @@ function run(parsed: Instruction[]) {
     } else if (parsed[i].operation === 'jmp') {
       i += parsed[i].argument;
     }
-    // console.log(parsed[i]);
   }
 
   return {
     accumulator,
     earlyAbort,
   };
+}
+
+function swapOperations(operation: string, op1: string, op2: string) {
+  if (operation === op1) {
+    return { op: op2, isSwapped: true };
+  } else if (operation === op2) {
+    return { op: op1, isSwapped: true };
+  }
+  return { op: operation, isSwapped: false };
 }
 
 function part1(values: string[]) {
@@ -118,17 +126,12 @@ function part2(values: string[]) {
   const parsed = stringToInstructions(values);
 
   for (let i = 0; i < values.length; i++) {
-    let skip = false;
     const cloned: Instruction[] = _.cloneDeep(parsed);
-    if (cloned[i].operation === 'nop') {
-      cloned[i].operation = 'jmp';
-    } else if (cloned[i].operation === 'jmp') {
-      cloned[i].operation = 'nop';
-    } else {
-      skip = true;
-    }
+    const { op, isSwapped } = swapOperations(cloned[i].operation, 'nop', 'jmp');
+    if (isSwapped) {
+      cloned[i].operation = op;
 
-    if (!skip) {
+      //   const result = run(cloned);
       const result = new Computer(cloned).run();
       if (result.earlyAbort == false) {
         return result;
