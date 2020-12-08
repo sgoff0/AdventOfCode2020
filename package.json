@@ -40,6 +40,7 @@
     "clipboardy": "^2.3.0",
     "dotenv": "^8.2.0",
     "get-caller-file": "^2.0.5",
+    "lodash": "^4.17.20",
     "source-map-support": "^0.5.19",
     "tracer": "^1.1.3"
   }
