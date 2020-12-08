@@ -4,33 +4,54 @@ import assert from 'assert';
 
 const rawInput = readInput();
 const input = rawInput.split('\n');
+
+/* Types */
+enum Operation {
+  nop = 'nop',
+  jmp = 'jmp',
+  acc = 'acc',
+}
 interface Instruction {
-  operation: string;
+  operation: Operation;
   argument: number;
 }
 
-/* Functions */
-function stringToInstructions(values: string[]): Instruction[] {
-  return values.map((i) => {
-    const [operation, argAsString] = i.split(' ');
-    const argument = parseInt(argAsString, 10);
-    return {
-      operation,
-      argument,
-    };
-  });
+interface ComputerResponse {
+  earlyAbort: boolean;
+  accumulator: number;
 }
 
-// Refactored way to solve
+/* Util Functions */
+const parse = (values: string[]): Instruction[] =>
+  values.map((i) => {
+    const [o, a] = i.split(' ');
+    return {
+      operation: o as Operation,
+      argument: parseInt(a, 10),
+    };
+  });
+
+const swapMap: Record<Operation, Operation> = {
+  acc: Operation.acc,
+  jmp: Operation.nop,
+  nop: Operation.jmp,
+};
+
+const swap = (i: Instruction): Instruction => ({
+  operation: swapMap[i.operation],
+  argument: i.argument,
+});
+
+/* Brains */
+
 class Computer {
   instructions: Instruction[];
-
-  duplicates = {};
+  duplicates = new Set();
   accumulator = 0;
   index = 0;
   earlyAbort = false;
 
-  ops = {
+  operations = {
     nop: (arg: number) => {
       this.index += 1;
     },
@@ -47,7 +68,7 @@ class Computer {
     this.instructions = instructions;
   }
 
-  run() {
+  run(): ComputerResponse {
     while (this.index < this.instructions.length) {
       if (this.failOnDuplicate() === true) {
         break;
@@ -62,84 +83,43 @@ class Computer {
   }
 
   failOnDuplicate() {
-    this.duplicates[this.index] = (this.duplicates[this.index] || 0) + 1;
-    if (this.duplicates[this.index] > 1) {
+    if (this.duplicates.has(this.index)) {
       this.earlyAbort = true;
       return true;
     }
+    this.duplicates.add(this.index);
     return false;
   }
 
   step() {
     const { operation, argument } = this.instructions[this.index];
-    this.ops[operation](argument);
+    this.operations[operation](argument);
   }
-}
-
-// Original way I solved
-function run(parsed: Instruction[]) {
-  const dupliateChecks: number[] = parsed.map((i) => 0);
-  let accumulator = 0;
-  let earlyAbort = false;
-
-  for (let i = 0; i < parsed.length; ) {
-    dupliateChecks[i] += 1;
-    if (dupliateChecks[i] > 1) {
-      earlyAbort = true;
-      return {
-        earlyAbort,
-        accumulator,
-      };
-    }
-    if (parsed[i].operation === 'nop') {
-      // do nothing
-      i += 1;
-    } else if (parsed[i].operation == 'acc') {
-      accumulator += parsed[i].argument;
-      i += 1;
-    } else if (parsed[i].operation === 'jmp') {
-      i += parsed[i].argument;
-    }
-  }
-
-  return {
-    accumulator,
-    earlyAbort,
-  };
-}
-
-function swapOperations(operation: string, op1: string, op2: string) {
-  if (operation === op1) {
-    return { op: op2, isSwapped: true };
-  } else if (operation === op2) {
-    return { op: op1, isSwapped: true };
-  }
-  return { op: operation, isSwapped: false };
 }
 
 function part1(values: string[]) {
-  //   return run(stringToInstructions(values));
-  return new Computer(stringToInstructions(values)).run();
+  return new Computer(parse(values)).run();
 }
+
+const toVerboseInstructions = (op: Instruction, i: number, instructions: Instruction[]) => ({ op, i, instructions });
+const isSwappable = ({ op }) => op.operation === Operation.nop || op.operation === Operation.jmp;
+const toSwappedRunResult = ({ i, instructions }) =>
+  new Computer([...instructions.slice(0, i), swap(instructions[i]), ...instructions.slice(i + 1)]).run();
+const toRunResult = (ops: Instruction[]) => new Computer(ops).run();
+const firstSuccess = (result: ComputerResponse) => result.earlyAbort == false;
 
 function part2(values: string[]) {
-  const parsed = stringToInstructions(values);
-
-  for (let i = 0; i < values.length; i++) {
-    const cloned: Instruction[] = _.cloneDeep(parsed);
-    const { op, isSwapped } = swapOperations(cloned[i].operation, 'nop', 'jmp');
-    if (isSwapped) {
-      cloned[i].operation = op;
-
-      //   const result = run(cloned);
-      const result = new Computer(cloned).run();
-      if (result.earlyAbort == false) {
-        return result;
-      }
-    }
-  }
-  return 0;
+  return parse(values).map(toVerboseInstructions).filter(isSwappable).map(toSwappedRunResult).find(firstSuccess);
 }
+
+// .map(toSwappedInstruction)
+// .map(toRunResult)
+// const toSwappedInstruction = ({ i, instructions }) => [
+//   ...instructions.slice(0, i),
+//   swap(instructions[i]),
+//   ...instructions.slice(i + 1),
+// ];
+// const toRunResult = (ops: Instruction[]) => new Computer(ops).run();
 
 /* Tests */
 
@@ -153,3 +133,36 @@ console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
+
+/* Original way I solved */
+
+// function run(parsed: Instruction[]) {
+//   const dupliateChecks: number[] = parsed.map((i) => 0);
+//   let accumulator = 0;
+//   let earlyAbort = false;
+
+//   for (let i = 0; i < parsed.length; ) {
+//     dupliateChecks[i] += 1;
+//     if (dupliateChecks[i] > 1) {
+//       earlyAbort = true;
+//       return {
+//         earlyAbort,
+//         accumulator,
+//       };
+//     }
+//     if (parsed[i].operation === 'nop') {
+//       // do nothing
+//       i += 1;
+//     } else if (parsed[i].operation == 'acc') {
+//       accumulator += parsed[i].argument;
+//       i += 1;
+//     } else if (parsed[i].operation === 'jmp') {
+//       i += parsed[i].argument;
+//     }
+//   }
+
+//   return {
+//     accumulator,
+//     earlyAbort,
+//   };
+// }
