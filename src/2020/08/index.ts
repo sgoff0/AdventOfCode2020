@@ -11,13 +11,18 @@ enum Operation {
   jmp = 'jmp',
   acc = 'acc',
 }
+
+enum ExitCode {
+  EOF,
+  DUPLICATE,
+}
 interface Instruction {
   operation: Operation;
   argument: number;
 }
 
-interface ComputerResponse {
-  earlyAbort: boolean;
+interface Result {
+  exitCode: ExitCode;
   accumulator: number;
 }
 
@@ -42,14 +47,13 @@ const swap = (i: Instruction): Instruction => ({
   argument: i.argument,
 });
 
-/* Brains */
-
-class Computer {
+class BootCode {
   instructions: Instruction[];
   duplicates = new Set();
+  ranIndexes: number[] = [];
   accumulator = 0;
   index = 0;
-  earlyAbort = false;
+  exitCode: ExitCode;
 
   operations = {
     nop: (arg: number) => {
@@ -68,59 +72,49 @@ class Computer {
     this.instructions = instructions;
   }
 
-  run(): ComputerResponse {
-    while (this.index < this.instructions.length && !this.failOnDuplicate()) {
+  run(): Result {
+    while (true) {
+      if (this.index >= this.instructions.length) {
+        this.exitCode = ExitCode.EOF;
+        break;
+      } else if (this.ranIndexes.includes(this.index)) {
+        this.exitCode = ExitCode.DUPLICATE;
+        break;
+      }
       this.step();
     }
     return {
-      earlyAbort: this.earlyAbort,
+      exitCode: this.exitCode,
       accumulator: this.accumulator,
     };
   }
 
   step() {
+    this.ranIndexes.push(this.index);
     const { operation, argument } = this.instructions[this.index];
     this.operations[operation](argument);
-  }
-
-  failOnDuplicate() {
-    if (this.duplicates.has(this.index)) {
-      this.earlyAbort = true;
-      return true;
-    }
-    this.duplicates.add(this.index);
-    return false;
   }
 }
 
 function part1(values: string[]) {
-  return new Computer(parse(values)).run();
+  return new BootCode(parse(values)).run();
 }
 
 const toVerboseInstructions = (op: Instruction, i: number, instructions: Instruction[]) => ({ op, i, instructions });
 const isSwappable = ({ op }) => op.operation === Operation.nop || op.operation === Operation.jmp;
 const toSwappedRunResult = ({ i, instructions }) =>
-  new Computer([...instructions.slice(0, i), swap(instructions[i]), ...instructions.slice(i + 1)]).run();
-const toRunResult = (ops: Instruction[]) => new Computer(ops).run();
-const firstSuccess = (result: ComputerResponse) => result.earlyAbort == false;
+  new BootCode([...instructions.slice(0, i), swap(instructions[i]), ...instructions.slice(i + 1)]).run();
+const toRunResult = (ops: Instruction[]) => new BootCode(ops).run();
+const firstSuccess = (result: Result) => result.exitCode == ExitCode.EOF;
 
 function part2(values: string[]) {
   return parse(values).map(toVerboseInstructions).filter(isSwappable).map(toSwappedRunResult).find(firstSuccess);
 }
 
-// .map(toSwappedInstruction)
-// .map(toRunResult)
-// const toSwappedInstruction = ({ i, instructions }) => [
-//   ...instructions.slice(0, i),
-//   swap(instructions[i]),
-//   ...instructions.slice(i + 1),
-// ];
-// const toRunResult = (ops: Instruction[]) => new Computer(ops).run();
-
 /* Tests */
 
-assert.deepStrictEqual(part1(input), { accumulator: 1331, earlyAbort: true });
-assert.deepStrictEqual(part2(input), { accumulator: 1121, earlyAbort: false });
+assert.deepStrictEqual(part1(input), { accumulator: 1331, exitCode: ExitCode.DUPLICATE });
+assert.deepStrictEqual(part2(input), { accumulator: 1121, exitCode: ExitCode.EOF });
 
 console.time('Time');
 const resultPart1 = part1(input);
