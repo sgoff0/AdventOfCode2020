@@ -5,6 +5,15 @@ import assert from 'assert';
 const rawInput = readInput();
 const input = rawInput.split('\n');
 
+const parse = (values: string[]): Instruction[] =>
+  values.map((i) => {
+    const [o, a] = i.split(' ');
+    return {
+      operation: o as Operation,
+      argument: parseInt(a, 10),
+    };
+  });
+
 /* Types */
 enum Operation {
   nop = 'nop',
@@ -16,6 +25,7 @@ enum ExitCode {
   EOF,
   DUPLICATE,
 }
+
 interface Instruction {
   operation: Operation;
   argument: number;
@@ -26,36 +36,14 @@ interface Result {
   accumulator: number;
 }
 
-/* Util Functions */
-const parse = (values: string[]): Instruction[] =>
-  values.map((i) => {
-    const [o, a] = i.split(' ');
-    return {
-      operation: o as Operation,
-      argument: parseInt(a, 10),
-    };
-  });
-
-const swapMap: Record<Operation, Operation> = {
-  acc: Operation.acc,
-  jmp: Operation.nop,
-  nop: Operation.jmp,
-};
-
-const swap = (i: Instruction): Instruction => ({
-  operation: swapMap[i.operation],
-  argument: i.argument,
-});
-
 class BootCode {
-  instructions: Instruction[];
-  duplicates = new Set();
-  ranIndexes: number[] = [];
-  accumulator = 0;
-  index = 0;
-  exitCode: ExitCode;
+  private instructions: Instruction[];
+  private duplicates = new Set();
+  private accumulator = 0;
+  private index = 0;
+  private exitCode: ExitCode;
 
-  operations = {
+  private operations = {
     nop: (arg: number) => {
       this.index += 1;
     },
@@ -72,25 +60,30 @@ class BootCode {
     this.instructions = instructions;
   }
 
-  run(): Result {
-    while (true) {
-      if (this.index >= this.instructions.length) {
-        this.exitCode = ExitCode.EOF;
-        break;
-      } else if (this.ranIndexes.includes(this.index)) {
-        this.exitCode = ExitCode.DUPLICATE;
-        break;
-      }
+  public run(): Result {
+    this.checkExitCodes();
+
+    if (this.exitCode === undefined) {
       this.step();
+      return this.run();
+    } else {
+      return {
+        exitCode: this.exitCode,
+        accumulator: this.accumulator,
+      };
     }
-    return {
-      exitCode: this.exitCode,
-      accumulator: this.accumulator,
-    };
   }
 
-  step() {
-    this.ranIndexes.push(this.index);
+  private checkExitCodes() {
+    if (this.index >= this.instructions.length) {
+      this.exitCode = ExitCode.EOF;
+    } else if (this.duplicates.has(this.index)) {
+      this.exitCode = ExitCode.DUPLICATE;
+    }
+  }
+
+  private step() {
+    this.duplicates.add(this.index);
     const { operation, argument } = this.instructions[this.index];
     this.operations[operation](argument);
   }
@@ -100,6 +93,16 @@ function part1(values: string[]) {
   return new BootCode(parse(values)).run();
 }
 
+const swapMap: Record<Operation, Operation> = {
+  acc: Operation.acc,
+  jmp: Operation.nop,
+  nop: Operation.jmp,
+};
+
+const swap = (i: Instruction): Instruction => ({
+  operation: swapMap[i.operation],
+  argument: i.argument,
+});
 const toVerboseInstructions = (op: Instruction, i: number, instructions: Instruction[]) => ({ op, i, instructions });
 const isSwappable = ({ op }) => op.operation === Operation.nop || op.operation === Operation.jmp;
 const toSwappedRunResult = ({ i, instructions }) =>
@@ -123,36 +126,3 @@ console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
-
-/* Original way I solved */
-
-// function run(parsed: Instruction[]) {
-//   const dupliateChecks: number[] = parsed.map((i) => 0);
-//   let accumulator = 0;
-//   let earlyAbort = false;
-
-//   for (let i = 0; i < parsed.length; ) {
-//     dupliateChecks[i] += 1;
-//     if (dupliateChecks[i] > 1) {
-//       earlyAbort = true;
-//       return {
-//         earlyAbort,
-//         accumulator,
-//       };
-//     }
-//     if (parsed[i].operation === 'nop') {
-//       // do nothing
-//       i += 1;
-//     } else if (parsed[i].operation == 'acc') {
-//       accumulator += parsed[i].argument;
-//       i += 1;
-//     } else if (parsed[i].operation === 'jmp') {
-//       i += parsed[i].argument;
-//     }
-//   }
-
-//   return {
-//     accumulator,
-//     earlyAbort,
-//   };
-// }
