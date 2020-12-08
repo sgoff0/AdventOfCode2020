@@ -5,16 +5,7 @@ import assert from 'assert';
 const rawInput = readInput();
 const input = rawInput.split('\n');
 
-const parse = (values: string[]): Instruction[] =>
-  values.map((i) => {
-    const [o, a] = i.split(' ');
-    return {
-      operation: o as Operation,
-      argument: parseInt(a, 10),
-    };
-  });
-
-/* Types */
+/* Enums/Types */
 enum Operation {
   nop = 'nop',
   jmp = 'jmp',
@@ -35,6 +26,17 @@ interface Result {
   exitCode: ExitCode;
   accumulator: number;
 }
+
+/* Common Functions */
+
+const parse = (values: string[]): Instruction[] =>
+  values.map((i) => {
+    const [o, a] = i.split(' ');
+    return {
+      operation: o as Operation,
+      argument: parseInt(a, 10),
+    };
+  });
 
 class BootCode {
   private instructions: Instruction[];
@@ -62,7 +64,6 @@ class BootCode {
 
   public run(): Result {
     this.checkExitCodes();
-
     if (this.exitCode === undefined) {
       this.step();
       return this.run();
@@ -88,6 +89,8 @@ class BootCode {
     this.operations[operation](argument);
   }
 }
+
+/* Problem Execution */
 
 function part1(values: string[]) {
   return new BootCode(parse(values)).run();
