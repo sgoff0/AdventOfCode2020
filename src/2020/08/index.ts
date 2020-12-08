@@ -69,17 +69,18 @@ class Computer {
   }
 
   run(): ComputerResponse {
-    while (this.index < this.instructions.length) {
-      if (this.failOnDuplicate() === true) {
-        break;
-      }
+    while (this.index < this.instructions.length && !this.failOnDuplicate()) {
       this.step();
     }
-
     return {
       earlyAbort: this.earlyAbort,
       accumulator: this.accumulator,
     };
+  }
+
+  step() {
+    const { operation, argument } = this.instructions[this.index];
+    this.operations[operation](argument);
   }
 
   failOnDuplicate() {
@@ -89,11 +90,6 @@ class Computer {
     }
     this.duplicates.add(this.index);
     return false;
-  }
-
-  step() {
-    const { operation, argument } = this.instructions[this.index];
-    this.operations[operation](argument);
   }
 }
 
