@@ -4,33 +4,48 @@ import assert from 'assert';
 
 const rawInput = readInput();
 const input = rawInput.split('\n');
+
+/* Enums/Types */
+enum Operation {
+  nop = 'nop',
+  jmp = 'jmp',
+  acc = 'acc',
+}
+
+enum ExitCode {
+  EOF,
+  DUPLICATE,
+}
+
 interface Instruction {
-  operation: string;
+  operation: Operation;
   argument: number;
 }
 
-/* Functions */
-function stringToInstructions(values: string[]): Instruction[] {
-  return values.map((i) => {
-    const [operation, argAsString] = i.split(' ');
-    const argument = parseInt(argAsString, 10);
-    return {
-      operation,
-      argument,
-    };
-  });
+interface Result {
+  exitCode: ExitCode;
+  accumulator: number;
 }
 
-// Refactored way to solve
-class Computer {
-  instructions: Instruction[];
+/* Common Functions */
 
-  duplicates = {};
-  accumulator = 0;
-  index = 0;
-  earlyAbort = false;
+const parse = (values: string[]): Instruction[] =>
+  values.map((i) => {
+    const [o, a] = i.split(' ');
+    return {
+      operation: o as Operation,
+      argument: parseInt(a, 10),
+    };
+  });
 
-  ops = {
+class BootCode {
+  private instructions: Instruction[];
+  private duplicates = new Set();
+  private accumulator = 0;
+  private index = 0;
+  private exitCode: ExitCode;
+
+  private operations = {
     nop: (arg: number) => {
       this.index += 1;
     },
@@ -47,104 +62,65 @@ class Computer {
     this.instructions = instructions;
   }
 
-  run() {
-    while (this.index < this.instructions.length) {
-      if (this.failOnDuplicate() === true) {
-        break;
-      }
-      this.step();
-    }
+  public run(): Result {
+    this.setPotentialExitCode();
 
-    return {
-      earlyAbort: this.earlyAbort,
-      accumulator: this.accumulator,
-    };
-  }
-
-  failOnDuplicate() {
-    this.duplicates[this.index] = (this.duplicates[this.index] || 0) + 1;
-    if (this.duplicates[this.index] > 1) {
-      this.earlyAbort = true;
-      return true;
-    }
-    return false;
-  }
-
-  step() {
-    const { operation, argument } = this.instructions[this.index];
-    this.ops[operation](argument);
-  }
-}
-
-// Original way I solved
-function run(parsed: Instruction[]) {
-  const dupliateChecks: number[] = parsed.map((i) => 0);
-  let accumulator = 0;
-  let earlyAbort = false;
-
-  for (let i = 0; i < parsed.length; ) {
-    dupliateChecks[i] += 1;
-    if (dupliateChecks[i] > 1) {
-      earlyAbort = true;
+    if (this.exitCode !== undefined) {
       return {
-        earlyAbort,
-        accumulator,
+        exitCode: this.exitCode,
+        accumulator: this.accumulator,
       };
     }
-    if (parsed[i].operation === 'nop') {
-      // do nothing
-      i += 1;
-    } else if (parsed[i].operation == 'acc') {
-      accumulator += parsed[i].argument;
-      i += 1;
-    } else if (parsed[i].operation === 'jmp') {
-      i += parsed[i].argument;
+    this.step();
+    return this.run();
+  }
+
+  private setPotentialExitCode() {
+    if (this.index >= this.instructions.length) {
+      this.exitCode = ExitCode.EOF;
+    } else if (this.duplicates.has(this.index)) {
+      this.exitCode = ExitCode.DUPLICATE;
     }
   }
 
-  return {
-    accumulator,
-    earlyAbort,
-  };
+  private step() {
+    this.duplicates.add(this.index);
+    const { operation, argument } = this.instructions[this.index];
+    this.operations[operation](argument);
+  }
 }
 
-function swapOperations(operation: string, op1: string, op2: string) {
-  if (operation === op1) {
-    return { op: op2, isSwapped: true };
-  } else if (operation === op2) {
-    return { op: op1, isSwapped: true };
-  }
-  return { op: operation, isSwapped: false };
-}
+/* Problem Execution */
 
 function part1(values: string[]) {
-  //   return run(stringToInstructions(values));
-  return new Computer(stringToInstructions(values)).run();
+  return new BootCode(parse(values)).run();
 }
 
+const swapMap: Record<Operation, Operation> = {
+  acc: Operation.acc,
+  jmp: Operation.nop,
+  nop: Operation.jmp,
+};
+
+const swap = (i: Instruction): Instruction => ({
+  operation: swapMap[i.operation],
+  argument: i.argument,
+});
+const toVerboseInstructions = (op: Instruction, i: number, instructions: Instruction[]) => ({ op, i, instructions });
+const isSwappable = ({ op }) => op.operation === Operation.nop || op.operation === Operation.jmp;
+const toSwappedRunResult = ({ i, instructions }) =>
+  new BootCode([...instructions.slice(0, i), swap(instructions[i]), ...instructions.slice(i + 1)]).run();
+const toRunResult = (ops: Instruction[]) => new BootCode(ops).run();
+const firstSuccess = (result: Result) => result.exitCode == ExitCode.EOF;
+
 function part2(values: string[]) {
-  const parsed = stringToInstructions(values);
-
-  for (let i = 0; i < values.length; i++) {
-    const cloned: Instruction[] = _.cloneDeep(parsed);
-    const { op, isSwapped } = swapOperations(cloned[i].operation, 'nop', 'jmp');
-    if (isSwapped) {
-      cloned[i].operation = op;
-
-      //   const result = run(cloned);
-      const result = new Computer(cloned).run();
-      if (result.earlyAbort == false) {
-        return result;
-      }
-    }
-  }
-  return 0;
+  return parse(values).map(toVerboseInstructions).filter(isSwappable).map(toSwappedRunResult).find(firstSuccess);
 }
 
 /* Tests */
 
-assert.deepStrictEqual(part1(input), { accumulator: 1331, earlyAbort: true });
-assert.deepStrictEqual(part2(input), { accumulator: 1121, earlyAbort: false });
+assert.deepStrictEqual(part1(input), { accumulator: 1331, exitCode: ExitCode.DUPLICATE });
+assert.deepStrictEqual(part2(input), { accumulator: 1121, exitCode: ExitCode.EOF });
 
 console.time('Time');
 const resultPart1 = part1(input);
