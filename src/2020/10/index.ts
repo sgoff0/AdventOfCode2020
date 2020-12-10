@@ -24,12 +24,14 @@ function part1(values: number[]): number {
   return differential[1] * differential[3];
 }
 
+let step = 0;
 function findPermutations(
   joltValues: number[],
   finalValue: number,
   memo: Map<number, number> = new Map<number, number>(),
 ) {
   return (function recurse(index = 0): number {
+    step += 1;
     const currentValue = joltValues[index];
     if (currentValue === finalValue) {
       return 1;
@@ -68,3 +70,4 @@ console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
+console.log('Steps: ', step);
