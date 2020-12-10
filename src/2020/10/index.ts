@@ -8,20 +8,18 @@ const input = rawInput.split('\n').map(Number);
 
 function part1(values: number[]): number {
   const sorted = values.sort((a, b) => a - b);
-
-  const padded = [0, ...sorted, sorted.slice(-1)[0] + 3];
-
-  const differential = {
-    1: 0,
-    2: 0,
-    3: 0,
-  };
-
-  padded.forEach((value, idx) => {
-    differential[padded[idx + 1] - value] += 1;
-  });
-
-  return differential[1] * differential[3];
+  const upper = Math.max(...sorted) + 3;
+  return [0, ...sorted, upper]
+    .reduce(
+      (acc, curr, idx, array) => {
+        const nextValue = array[idx + 1];
+        acc[nextValue - curr] += 1;
+        return acc;
+      },
+      [0, 0, 0, 0],
+    )
+    .filter((value, i) => i == 1 || i == 3)
+    .reduce((prev, curr) => prev * curr);
 }
 
 function findPermutations(
@@ -55,6 +53,7 @@ function findPermutations(
 function part2(values: number[]): number {
   const sorted = values.sort((a, b) => a - b);
   const upper = Math.max(...sorted) + 3;
+
   return findPermutations([0, ...sorted, upper], upper);
 }
 
