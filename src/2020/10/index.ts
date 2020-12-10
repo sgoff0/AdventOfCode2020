@@ -9,8 +9,8 @@ const input = rawInput.split('\n').map(Number);
 
 function part1(values: number[]): number {
   const sorted = values.sort((a, b) => a - b);
-  sorted.unshift(0);
-  sorted.push(sorted.slice(-1)[0] + 3);
+
+  const padded = [0, ...sorted, sorted.slice(-1)[0] + 3];
 
   const differential = {
     1: 0,
@@ -18,128 +18,79 @@ function part1(values: number[]): number {
     3: 0,
   };
 
-  sorted.forEach((value, idx) => {
-    differential[sorted[idx + 1] - value] += 1;
+  padded.forEach((value, idx) => {
+    differential[padded[idx + 1] - value] += 1;
   });
 
   return differential[1] * differential[3];
 }
 
 // currently we're manipulationg aray
-function calculatePermuations(list: number[]) {
-  const values = _.cloneDeep(list);
-  //   console.log('Calculate on ' + values);
-
+function calculatePermuations(values: number[]) {
   const sorted = values.sort((a, b) => a - b);
-  const validPermutaitons = 0;
-  const max = Math.max(...sorted) + 3;
-  return recurse2(sorted, max, 0, 0);
-  // Step 1, at index 0, loop through ALL array items finding all eligible indexes for step 0 (0 - 3)
-  // Step 2, at index 1, loop through ALL REMAINING array items finding all eligible indexes for step 1, > index 0 val && <= index 0 + 3
-  // Repeat
-  // Build out valid chains, counting each one that makes it to end
-
-  //   console.log(recurse(sorted, max, 0));
-  //   for (let i = 0; i < sorted.length; i++) {
-  //     if (i === 0 && i > 3) {
-  //       return false;
-  //     } else if (i === sorted.length - 1 && max - i > 3) {
-  //       return false;
-  //     } else if (i >= 1) {
-  //       const difference = sorted[i] - sorted[i - 1];
-
-  //       // continue
-  //       return difference <= 3 && difference > 0;
-  //     } else if (i === 0) {
-  //       // continue
-  //     } else {
-  //       return true;
-  //     }
-  //   }
+  const upper = Math.max(...sorted) + 3;
+  return findPermutations(sorted, upper, 0, 0);
 }
-function recurse2(
-  remainingIndexes: number[],
-  max: number,
-  previousValue: number,
-  depth: number,
-  attempted: number[] = [],
-) {
-  let isValid = 0;
 
-  // stop this chain, none will work if sorted
+let steps = 0;
+
+function findPermutations(remainingIndexes: number[], max: number, previousValue: number, depth: number) {
+  steps += 1;
+  if (steps % 100000000 === 0) {
+    console.log('Step: ' + steps);
+  }
+  let isValid = 0;
+  // If completed, confirm w/in 3 of max
+  if (remainingIndexes.length === 0) {
+    return max - previousValue > 0 && max - previousValue <= 3 ? 1 : 0;
+  }
+
+  // stop all future checks if my sorted value is a failure
   if (remainingIndexes[0] - previousValue > 3) {
     return isValid;
   }
 
-  // If completed, confirm w/in 3 of max
-  if (remainingIndexes.length === 0) {
-    if (max - previousValue > 0 && max - previousValue <= 3) {
-      //   console.log(`!!! Got a winner ${attempted}`);
+  // grab next x eligible values in range, stop once we're out of range (since we're sorted and all others will fail)
+  const eligibleIndexes = [];
+  remainingIndexes.every((val) => {
+    if (val - previousValue > 0 && val - previousValue <= 3) {
+      eligibleIndexes.push(val);
+      return true;
     }
-    isValid += max - previousValue > 0 && max - previousValue <= 3 ? 1 : 0;
-    return isValid;
-  }
+    return false;
+  });
 
-  // Otherwise find all paths where next step is w/in 3 of previous
-  const elibileIndexes = remainingIndexes.filter((val) => val - previousValue > 0 && val - previousValue <= 3);
-
-  // Try starting w/ any of these values
-  elibileIndexes.forEach((value, i) => {
-    // Try with all
-    const othersRemaining = remainingIndexes.slice(i + 1);
-    // console.log(`Trying for ${value} and list ${othersRemaining}`);
-    isValid += recurse2(othersRemaining, max, value, depth + 1, [...attempted, value]);
-
-    // TODO try w/ dropping some
+  // Run all the permutations, end each permuation chain the moment one fails due to assumptions we can make being sorted
+  eligibleIndexes.every((value, i) => {
+    // console.log(depth + i);
+    const amountFound = findPermutations(remainingIndexes.slice(i + 1), max, value, depth + 1);
+    isValid += amountFound;
+    return amountFound > 0;
   });
   return isValid;
 }
 
-// Grr stuck
-function recurse(sorted: number[], max: number, depth: number) {
-  for (let i = depth; i < sorted.length; i++) {
-    if (i === 0 && i > 3) {
-      //   console.log('Fail a');
-      return false;
-    } else if (i === sorted.length - 1 && max - i > 3) {
-      //   console.log('Fail b');
-      return false;
-    } else if (i >= 1) {
-      const difference = sorted[i] - sorted[i - 1];
-      if (difference <= 3 && difference > 0) {
-        recurse(sorted, max, depth + 1);
-      } else {
-        // console.log('Fail c');
-        return false;
-      }
-    } else if (i === 0) {
-      // continue
-      recurse(sorted, max, depth + 1);
-    } else {
-      console.log('T');
-      return true;
-    }
-  }
-}
-
 function part2(list: number[]): number {
-  const values = _.cloneDeep(list);
-  return calculatePermuations(values);
-  //   return 0;
+  // Too slow
+  //   const values = _.cloneDeep(list);
+  //   return calculatePermuations(values);
+
+  // Alt, just look at differences between items in the list
+
+  // Use tribonachi to precompute consequitive values that are 1 apart,
+  // Also, every time you remove an element you're dealing with 2 runs (original + new)
+  // g[n] == g[n-1]+g[n-2]+g[n-3]
+  // For example,
+
+  const retVal = 0;
+  //   console.log(reduce1);
+  return retVal;
 }
-
-/* Tests */
-
-// assert.strictEqual(part1([1, 1, 1]), 0);
-
-// assert.strictEqual(part2([1, -1]), 0);
-
-/* Results */
 
 console.time('Time');
-// const resultPart1 = part1(input);
+const resultPart1 = part1(input);
 const resultPart2 = part2(input);
 console.timeEnd('Time');
 
-// console.log('Solution to part 1:', resultPart1); // 2664
+console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
