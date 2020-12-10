@@ -29,7 +29,7 @@ function findPermutations(
   finalValue: number,
   memo: Map<number, number> = new Map<number, number>(),
 ) {
-  return function recurse(index: number): number {
+  return (function recurse(index = 0): number {
     const currentValue = joltValues[index];
     if (currentValue === finalValue) {
       return 1;
@@ -49,22 +49,22 @@ function findPermutations(
           return prev + myResult;
         }
       }, 0);
-  };
+  })();
 }
 
 function part2(values: number[]): number {
   const sorted = values.sort((a, b) => a - b);
   const upper = Math.max(...sorted) + 3;
-  return findPermutations([0, ...sorted, upper], upper)(0);
+  return findPermutations([0, ...sorted, upper], upper);
 }
 
 assert.strictEqual(part1(input), 2664);
 assert.strictEqual(part2(input), 148098383347712);
 
 console.time('Time');
-// const resultPart1 = part1(input);
+const resultPart1 = part1(input);
 const resultPart2 = part2(input);
 console.timeEnd('Time');
 
-// console.log('Solution to part 1:', resultPart1);
+console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
