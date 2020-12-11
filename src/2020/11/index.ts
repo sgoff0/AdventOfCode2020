@@ -1,6 +1,7 @@
 import readInput from '../../utils/readInput';
 import assert from 'assert';
 import * as _ from 'lodash';
+import '../../utils/extensions/map';
 
 const rawInput = readInput();
 const input = rawInput.split('\n');
@@ -31,7 +32,12 @@ const directions = [
   [-1, -1],
 ];
 
-const adjacentCount = (layout: Status[][], x: number, y: number) => {
+const adjacentCount = (
+  layout: Status[][],
+  x: number,
+  y: number,
+  isOccupied: (layout: Status[][], x: number, y: number) => number,
+) => {
   return directions.reduce((acc, [yMod, xMod]) => acc + isOccupied(layout, x + xMod, y + yMod), 0);
 };
 
@@ -51,29 +57,30 @@ function parse(values: string[]) {
   return values.map((row) => row.split('').map((i) => i as Status));
 }
 
-function changeSeats(oldLayout: Status[][], didLayoutChange: boolean): Status[][] {
-  if (didLayoutChange === false) {
-    return oldLayout;
-  }
-
-  const newList = oldLayout.map((r) => r.map((c) => c));
-
+function changeSeats(
+  oldLayout: Status[][],
+  seatCheckFunction: (map: Status[][], x: number, y: number) => Status,
+): Status[][] {
   let isChanged = false;
-  oldLayout.forEach((rowValue, y) => {
-    rowValue.forEach((colValue, x) => {
-      const newStatus = getNewSeatStatus(oldLayout, x, y);
+  const newList = oldLayout.map((rowValue, y) => {
+    return rowValue.map((colValue, x) => {
+      const newStatus = seatCheckFunction(oldLayout, x, y);
       if (newStatus !== colValue) {
         isChanged = true;
-        newList[y][x] = newStatus;
       }
+      return newStatus;
     });
   });
 
-  return changeSeats(newList, isChanged);
+  if (!isChanged) {
+    return oldLayout;
+  }
+
+  return changeSeats(newList, seatCheckFunction);
 }
 
 function part1(values: string[]): number {
-  return changeSeats(parse(values), true).reduce((total, row) => {
+  return changeSeats(parse(values), getNewSeatStatus).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
@@ -92,12 +99,7 @@ function longRangeCount(
     return 0;
   }
   const currentValue = layout[y][x];
-  //   console.log(
-  //     `D: ${depth}, Start: (${startingX}, ${startingY}) Dir: (${directionX}, ${directionY}) Pos: (${x}, ${y}), Val: ${currentValue}`,
-  //   );
-  //   console.log(`Checking ${x}, ${y} and got ${currentValue}`);
   if (currentValue === Status.FLOOR) {
-    // console.log('Found floor, try again deeper');
     return longRangeCount(layout, startingX, startingY, directionX, directionY, depth + 1);
   }
   const retVal = layout[y][x] === Status.OCCUPIED ? 1 : 0;
@@ -109,7 +111,7 @@ const longRangeAdjacentCount = (layout: Status[][], x: number, y: number) => {
   return directions.reduce((acc, [dirX, dirY]) => acc + longRangeCount(layout, x, y, dirX, dirY), 0);
 };
 
-function getNewLongRangeSeatStatus(layout: Status[][], x: number, y: number) {
+function getNewLongRangeSeatStatus(layout: Status[][], x: number, y: number): Status {
   const currentSeat = layout[y][x];
   const neighbors = longRangeAdjacentCount(layout, x, y);
   if (currentSeat === Status.EMPTY && neighbors === 0) {
@@ -121,29 +123,8 @@ function getNewLongRangeSeatStatus(layout: Status[][], x: number, y: number) {
   }
 }
 
-function changePart2Seats(oldLayout: Status[][], didLayoutChange: boolean): Status[][] {
-  if (didLayoutChange === false) {
-    return oldLayout;
-  }
-
-  const newList = oldLayout.map((r) => r.map((c) => c));
-
-  let isChanged = false;
-  oldLayout.forEach((rowValue, y) => {
-    rowValue.forEach((colValue, x) => {
-      const newStatus = getNewLongRangeSeatStatus(oldLayout, x, y);
-      if (newStatus !== colValue) {
-        isChanged = true;
-        newList[y][x] = newStatus;
-      }
-    });
-  });
-
-  return changePart2Seats(newList, isChanged);
-}
-
 function part2(values: string[]): number {
-  return changePart2Seats(parse(values), true).reduce((total, row) => {
+  return changeSeats(parse(values), getNewLongRangeSeatStatus).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
@@ -154,25 +135,14 @@ const test1 = [
   [Status.FLOOR, Status.FLOOR, Status.EMPTY, Status.OCCUPIED],
   [Status.FLOOR, Status.OCCUPIED, Status.EMPTY, Status.EMPTY],
 ];
-// const testFilled = [
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-// ];
-
 assert.strictEqual(longRangeAdjacentCount(test1, 1, 0), 3);
-// assert.strictEqual(getNewSeatStatus(testEmpty, 0, 1), Status.OCCUPIED);
-// assert.strictEqual(getNewSeatStatus(testEmpty, 0, 2), Status.OCCUPIED);
-
-// assert.strictEqual(getNewSeatStatus(testFilled, 0, 0), Status.OCCUPIED);
-// assert.strictEqual(getNewSeatStatus(testFilled, 1, 2), Status.EMPTY);
 assert.strictEqual(part1(input), 2346);
+assert.strictEqual(part2(input), 2111);
 
 console.time('Time');
-const resultPart1 = part1(input); // NOT 2723, 2693, 2954, 3809
-const resultPart2 = part2(input);
+// const resultPart1 = part1(input); // NOT 2723, 2693, 2954, 3809
+// const resultPart2 = part2(input);
 console.timeEnd('Time');
 
-console.log('Solution to part 1:', resultPart1);
-console.log('Solution to part 2:', resultPart2);
+// console.log('Solution to part 1:', resultPart1);
+// console.log('Solution to part 2:', resultPart2);
