@@ -139,7 +139,7 @@ function changePart2Seats(oldLayout: Status[][], didLayoutChange: boolean): Stat
     });
   });
 
-  return changeSeats(newList, isChanged);
+  return changePart2Seats(newList, isChanged);
 }
 
 function part2(values: string[]): number {
@@ -167,12 +167,12 @@ assert.strictEqual(longRangeAdjacentCount(test1, 1, 0), 3);
 
 // assert.strictEqual(getNewSeatStatus(testFilled, 0, 0), Status.OCCUPIED);
 // assert.strictEqual(getNewSeatStatus(testFilled, 1, 2), Status.EMPTY);
-// assert.strictEqual(part1(input), 2346);
+assert.strictEqual(part1(input), 2346);
 
 console.time('Time');
-// const resultPart1 = part1(input); // NOT 2723, 2693, 2954, 3809
+const resultPart1 = part1(input); // NOT 2723, 2693, 2954, 3809
 const resultPart2 = part2(input);
 console.timeEnd('Time');
 
-// console.log('Solution to part 1:', resultPart1);
+console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
