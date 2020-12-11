@@ -6,8 +6,6 @@ import '../../utils/extensions/map';
 const rawInput = readInput();
 const input = rawInput.split('\n');
 
-/* Functions */
-
 enum Status {
   EMPTY = 'L',
   FLOOR = '.',
@@ -24,18 +22,33 @@ const directions = [
   [-1, -1],
 ];
 
+class Vector2 {
+  x: number;
+  y: number;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
 function parse(values: string[]) {
   return values.map((row) => row.split('').map((i) => i as Status));
 }
 
-function isOccupiedRange1(layout: Status[][], x: number, y: number): number {
+/**
+ * Returns 1 if seat in
+ * @param layout
+ * @param x
+ * @param y
+ */
+function isSeatOccupiedRange1(layout: Status[][], x: number, y: number): number {
   if (x < 0 || y < 0 || x >= layout[0].length || y >= layout.length) {
     return 0;
   }
   return layout[y][x] === Status.OCCUPIED ? 1 : 0;
 }
 
-function isOccupiedRangeInfinite(
+function isSeatOccupiedRangeInfinite(
   layout: Status[][],
   startingX: number,
   startingY: number,
@@ -50,20 +63,24 @@ function isOccupiedRangeInfinite(
   }
   const currentValue = layout[y][x];
   if (currentValue === Status.FLOOR) {
-    return isOccupiedRangeInfinite(layout, startingX, startingY, directionX, directionY, depth + 1);
+    return isSeatOccupiedRangeInfinite(layout, startingX, startingY, directionX, directionY, depth + 1);
   }
   return layout[y][x] === Status.OCCUPIED ? 1 : 0;
 }
 
-const adjacentCountRange1 = (layout: Status[][], x: number, y: number) => {
-  return directions.reduce((acc, [yMod, xMod]) => acc + isOccupiedRange1(layout, x + xMod, y + yMod), 0);
-};
-const longRangeAdjacentCount = (layout: Status[][], x: number, y: number) => {
-  return directions.reduce((acc, [dirX, dirY]) => acc + isOccupiedRangeInfinite(layout, x, y, dirX, dirY), 0);
+const occupiedNeighborCountRange1 = (layout: Status[][], x: number, y: number) => {
+  return directions.reduce((acc, [yMod, xMod]) => acc + isSeatOccupiedRange1(layout, x + xMod, y + yMod), 0);
 };
 
-const getFunctionRange1 = (layout: Status[][], x: number, y: number) => {
-  return getSeatStatus(adjacentCountRange1, layout, x, y);
+const occupiedNeighborCountRangeInfinite = (layout: Status[][], x: number, y: number) => {
+  return directions.reduce((acc, [dirX, dirY]) => acc + isSeatOccupiedRangeInfinite(layout, x, y, dirX, dirY), 0);
+};
+
+const nextTickSeatStatusRange1 = (layout: Status[][], x: number, y: number) => {
+  return getSeatStatus(occupiedNeighborCountRange1, layout, x, y, 4);
+};
+const nextTickSeatStatusRangeInfinite = (layout: Status[][], x: number, y: number) => {
+  return getSeatStatus(occupiedNeighborCountRangeInfinite, layout, x, y, 5);
 };
 
 function getSeatStatus(
@@ -71,36 +88,13 @@ function getSeatStatus(
   layout: Status[][],
   x: number,
   y: number,
+  min: number,
 ) {
   const currentSeat = layout[y][x];
-  const neighbors = adjacentCountRange1(layout, x, y);
+  const neighbors = getNeighbors(layout, x, y);
   if (currentSeat === Status.EMPTY && neighbors === 0) {
     return Status.OCCUPIED;
-  } else if (currentSeat === Status.OCCUPIED && neighbors >= 4) {
-    return Status.EMPTY;
-  } else {
-    return currentSeat;
-  }
-}
-
-function getSeatStatusRange1(layout: Status[][], x: number, y: number) {
-  const currentSeat = layout[y][x];
-  const neighbors = adjacentCountRange1(layout, x, y);
-  if (currentSeat === Status.EMPTY && neighbors === 0) {
-    return Status.OCCUPIED;
-  } else if (currentSeat === Status.OCCUPIED && neighbors >= 4) {
-    return Status.EMPTY;
-  } else {
-    return currentSeat;
-  }
-}
-
-function getSeatStatusRangeInfinite(layout: Status[][], x: number, y: number): Status {
-  const currentSeat = layout[y][x];
-  const neighbors = longRangeAdjacentCount(layout, x, y);
-  if (currentSeat === Status.EMPTY && neighbors === 0) {
-    return Status.OCCUPIED;
-  } else if (currentSeat === Status.OCCUPIED && neighbors >= 5) {
+  } else if (currentSeat === Status.OCCUPIED && neighbors >= min) {
     return Status.EMPTY;
   } else {
     return currentSeat;
@@ -129,13 +123,13 @@ function changeSeats(
 }
 
 function part1(values: string[]): number {
-  return changeSeats(parse(values), getSeatStatusRange1).reduce((total, row) => {
+  return changeSeats(parse(values), nextTickSeatStatusRange1).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
 
 function part2(values: string[]): number {
-  return changeSeats(parse(values), getSeatStatusRangeInfinite).reduce((total, row) => {
+  return changeSeats(parse(values), nextTickSeatStatusRangeInfinite).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
@@ -147,12 +141,12 @@ const test1 = [
   [Status.FLOOR, Status.OCCUPIED, Status.EMPTY, Status.EMPTY],
 ];
 
-assert.strictEqual(longRangeAdjacentCount(test1, 1, 0), 3);
+assert.strictEqual(occupiedNeighborCountRangeInfinite(test1, 1, 0), 3);
 assert.strictEqual(part1(input), 2346);
 assert.strictEqual(part2(input), 2111);
 
 console.time('Time');
-const resultPart1 = part1(input); // NOT 2723, 2693, 2954, 3809
+const resultPart1 = part1(input);
 const resultPart2 = part2(input);
 console.timeEnd('Time');
 
