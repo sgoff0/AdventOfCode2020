@@ -64,7 +64,7 @@ function isSeatOccupiedInRange(
   if (currentValue === Status.FLOOR) {
     return isSeatOccupiedInRange(layout, position, direction, range, depth + 1);
   }
-  return layout[seat.y][seat.x] === Status.OCCUPIED ? 1 : 0;
+  return currentValue === Status.OCCUPIED ? 1 : 0;
 }
 
 const getOccupiedNeighborCountInRange = (range: number) => (layout: Status[][], p: Vector2) => {
