@@ -1,7 +1,5 @@
 import readInput from '../../utils/readInput';
 import assert from 'assert';
-import * as _ from 'lodash';
-import '../../utils/extensions/map';
 
 const rawInput = readInput();
 const input = rawInput.split('\n');
@@ -11,16 +9,6 @@ enum Status {
   FLOOR = '.',
   OCCUPIED = '#',
 }
-const directions = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-];
 
 class Vector2 {
   x: number;
@@ -29,61 +17,66 @@ class Vector2 {
     this.x = x;
     this.y = y;
   }
+
+  add(vector: Vector2) {
+    return new Vector2(this.x + vector.x, this.y + vector.y);
+  }
+  multiply(val: number) {
+    return new Vector2(this.x * val, this.y * val);
+  }
+
+  inBounds(maxX: number, maxY: number) {
+    return this.x >= 0 && this.y >= 0 && this.x < maxX && this.y < maxY;
+  }
 }
+
+const directions = [
+  new Vector2(1, 0),
+  new Vector2(-1, 0),
+  new Vector2(0, 1),
+  new Vector2(0, -1),
+  new Vector2(1, 1),
+  new Vector2(1, -1),
+  new Vector2(-1, 1),
+  new Vector2(-1, -1),
+];
 
 function parse(values: string[]) {
   return values.map((row) => row.split('').map((i) => i as Status));
 }
 
-/**
- * Returns 1 if seat in
- * @param layout
- * @param x
- * @param y
- */
-function isSeatOccupiedRange1(layout: Status[][], p: Vector2): number {
-  if (p.x < 0 || p.y < 0 || p.x >= layout[0].length || p.y >= layout.length) {
-    return 0;
-  }
-  return layout[p.y][p.x] === Status.OCCUPIED ? 1 : 0;
-}
-
-function isSeatOccupiedRangeInfinite(
+function isSeatOccupiedInRange(
   layout: Status[][],
-  startingX: number,
-  startingY: number,
-  directionX: number,
-  directionY: number,
+  position: Vector2,
+  direction: Vector2,
+  range: number,
   depth = 1,
 ): number {
-  const x = startingX + directionX * depth;
-  const y = startingY + directionY * depth;
-  if (x < 0 || y < 0 || x >= layout[0].length || y >= layout.length) {
+  if (depth > range) {
     return 0;
   }
-  const currentValue = layout[y][x];
-  if (currentValue === Status.FLOOR) {
-    return isSeatOccupiedRangeInfinite(layout, startingX, startingY, directionX, directionY, depth + 1);
+  const seat = position.add(direction.multiply(depth));
+  if (!seat.inBounds(layout[0].length, layout.length)) {
+    return 0;
   }
-  return layout[y][x] === Status.OCCUPIED ? 1 : 0;
+
+  const currentValue = layout[seat.y][seat.x];
+  if (currentValue === Status.FLOOR) {
+    return isSeatOccupiedInRange(layout, position, direction, range, depth + 1);
+  }
+  return layout[seat.y][seat.x] === Status.OCCUPIED ? 1 : 0;
 }
 
-const occupiedNeighborCountRange1 = (layout: Status[][], p: Vector2) => {
-  return directions.reduce(
-    (acc, [yMod, xMod]) => acc + isSeatOccupiedRange1(layout, new Vector2(p.x + xMod, p.y + yMod)),
-    0,
-  );
-};
-
-const occupiedNeighborCountRangeInfinite = (layout: Status[][], p: Vector2) => {
-  return directions.reduce((acc, [dirX, dirY]) => acc + isSeatOccupiedRangeInfinite(layout, p.x, p.y, dirX, dirY), 0);
+const getOccupiedNeighborCountInRange = (range: number) => (layout: Status[][], p: Vector2) => {
+  return directions.reduce((acc, direction) => acc + isSeatOccupiedInRange(layout, p, direction, range), 0);
 };
 
 const nextTickSeatStatusRange1 = (layout: Status[][], p: Vector2) => {
-  return getSeatStatus(occupiedNeighborCountRange1, layout, p, 4);
+  return getSeatStatus(getOccupiedNeighborCountInRange(1), layout, p, 4);
 };
 const nextTickSeatStatusRangeInfinite = (layout: Status[][], p: Vector2) => {
-  return getSeatStatus(occupiedNeighborCountRangeInfinite, layout, p, 5);
+  const maxLength = Math.max(layout.length, layout[0].length);
+  return getSeatStatus(getOccupiedNeighborCountInRange(maxLength), layout, p, 5);
 };
 
 function getSeatStatus(
@@ -125,13 +118,15 @@ function changeSeats(
 }
 
 function part1(values: string[]): number {
-  return changeSeats(parse(values), nextTickSeatStatusRange1).reduce((total, row) => {
+  const layout = parse(values);
+  return changeSeats(layout, nextTickSeatStatusRange1).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
 
 function part2(values: string[]): number {
-  return changeSeats(parse(values), nextTickSeatStatusRangeInfinite).reduce((total, row) => {
+  const layout = parse(values);
+  return changeSeats(layout, nextTickSeatStatusRangeInfinite).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
@@ -143,7 +138,7 @@ const test1 = [
   [Status.FLOOR, Status.OCCUPIED, Status.EMPTY, Status.EMPTY],
 ];
 
-assert.strictEqual(occupiedNeighborCountRangeInfinite(test1, new Vector2(1, 0)), 3);
+assert.strictEqual(getOccupiedNeighborCountInRange(5)(test1, new Vector2(1, 0)), 3);
 assert.strictEqual(part1(input), 2346);
 assert.strictEqual(part2(input), 2111);
 
