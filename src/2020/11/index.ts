@@ -62,6 +62,27 @@ const longRangeAdjacentCount = (layout: Status[][], x: number, y: number) => {
   return directions.reduce((acc, [dirX, dirY]) => acc + isOccupiedRangeInfinite(layout, x, y, dirX, dirY), 0);
 };
 
+const getFunctionRange1 = (layout: Status[][], x: number, y: number) => {
+  return getSeatStatus(adjacentCountRange1, layout, x, y);
+};
+
+function getSeatStatus(
+  getNeighbors: (layout: Status[][], x: number, y: number) => number,
+  layout: Status[][],
+  x: number,
+  y: number,
+) {
+  const currentSeat = layout[y][x];
+  const neighbors = adjacentCountRange1(layout, x, y);
+  if (currentSeat === Status.EMPTY && neighbors === 0) {
+    return Status.OCCUPIED;
+  } else if (currentSeat === Status.OCCUPIED && neighbors >= 4) {
+    return Status.EMPTY;
+  } else {
+    return currentSeat;
+  }
+}
+
 function getSeatStatusRange1(layout: Status[][], x: number, y: number) {
   const currentSeat = layout[y][x];
   const neighbors = adjacentCountRange1(layout, x, y);
