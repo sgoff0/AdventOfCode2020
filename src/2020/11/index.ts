@@ -1,6 +1,7 @@
 import readInput from '../../utils/readInput';
 import assert from 'assert';
 import * as _ from 'lodash';
+import '../../utils/extensions/map';
 
 const rawInput = readInput();
 const input = rawInput.split('\n');
@@ -12,14 +13,6 @@ enum Status {
   FLOOR = '.',
   OCCUPIED = '#',
 }
-
-function isOccupied(layout: Status[][], x: number, y: number) {
-  if (x < 0 || y < 0 || x >= layout[0].length || y >= layout.length) {
-    return 0;
-  }
-  return layout[y][x] === Status.OCCUPIED ? 1 : 0;
-}
-
 const directions = [
   [1, 0],
   [-1, 0],
@@ -31,54 +24,18 @@ const directions = [
   [-1, -1],
 ];
 
-const adjacentCount = (layout: Status[][], x: number, y: number) => {
-  return directions.reduce((acc, [yMod, xMod]) => acc + isOccupied(layout, x + xMod, y + yMod), 0);
-};
-
-function getNewSeatStatus(layout: Status[][], x: number, y: number) {
-  const currentSeat = layout[y][x];
-  const neighbors = adjacentCount(layout, x, y);
-  if (currentSeat === Status.EMPTY && neighbors === 0) {
-    return Status.OCCUPIED;
-  } else if (currentSeat === Status.OCCUPIED && neighbors >= 4) {
-    return Status.EMPTY;
-  } else {
-    return currentSeat;
-  }
-}
-
 function parse(values: string[]) {
   return values.map((row) => row.split('').map((i) => i as Status));
 }
 
-function changeSeats(oldLayout: Status[][], didLayoutChange: boolean): Status[][] {
-  if (didLayoutChange === false) {
-    return oldLayout;
+function isOccupiedRange1(layout: Status[][], x: number, y: number): number {
+  if (x < 0 || y < 0 || x >= layout[0].length || y >= layout.length) {
+    return 0;
   }
-
-  const newList = oldLayout.map((r) => r.map((c) => c));
-
-  let isChanged = false;
-  oldLayout.forEach((rowValue, y) => {
-    rowValue.forEach((colValue, x) => {
-      const newStatus = getNewSeatStatus(oldLayout, x, y);
-      if (newStatus !== colValue) {
-        isChanged = true;
-        newList[y][x] = newStatus;
-      }
-    });
-  });
-
-  return changeSeats(newList, isChanged);
+  return layout[y][x] === Status.OCCUPIED ? 1 : 0;
 }
 
-function part1(values: string[]): number {
-  return changeSeats(parse(values), true).reduce((total, row) => {
-    return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
-  }, 0);
-}
-
-function longRangeCount(
+function isOccupiedRangeInfinite(
   layout: Status[][],
   startingX: number,
   startingY: number,
@@ -92,24 +49,53 @@ function longRangeCount(
     return 0;
   }
   const currentValue = layout[y][x];
-  //   console.log(
-  //     `D: ${depth}, Start: (${startingX}, ${startingY}) Dir: (${directionX}, ${directionY}) Pos: (${x}, ${y}), Val: ${currentValue}`,
-  //   );
-  //   console.log(`Checking ${x}, ${y} and got ${currentValue}`);
   if (currentValue === Status.FLOOR) {
-    // console.log('Found floor, try again deeper');
-    return longRangeCount(layout, startingX, startingY, directionX, directionY, depth + 1);
+    return isOccupiedRangeInfinite(layout, startingX, startingY, directionX, directionY, depth + 1);
   }
-  const retVal = layout[y][x] === Status.OCCUPIED ? 1 : 0;
-  //   console.log(`RV: [${x}, ${y}]`, retVal);
-  return retVal;
+  return layout[y][x] === Status.OCCUPIED ? 1 : 0;
 }
 
+const adjacentCountRange1 = (layout: Status[][], x: number, y: number) => {
+  return directions.reduce((acc, [yMod, xMod]) => acc + isOccupiedRange1(layout, x + xMod, y + yMod), 0);
+};
 const longRangeAdjacentCount = (layout: Status[][], x: number, y: number) => {
-  return directions.reduce((acc, [dirX, dirY]) => acc + longRangeCount(layout, x, y, dirX, dirY), 0);
+  return directions.reduce((acc, [dirX, dirY]) => acc + isOccupiedRangeInfinite(layout, x, y, dirX, dirY), 0);
 };
 
-function getNewLongRangeSeatStatus(layout: Status[][], x: number, y: number) {
+const getFunctionRange1 = (layout: Status[][], x: number, y: number) => {
+  return getSeatStatus(adjacentCountRange1, layout, x, y);
+};
+
+function getSeatStatus(
+  getNeighbors: (layout: Status[][], x: number, y: number) => number,
+  layout: Status[][],
+  x: number,
+  y: number,
+) {
+  const currentSeat = layout[y][x];
+  const neighbors = adjacentCountRange1(layout, x, y);
+  if (currentSeat === Status.EMPTY && neighbors === 0) {
+    return Status.OCCUPIED;
+  } else if (currentSeat === Status.OCCUPIED && neighbors >= 4) {
+    return Status.EMPTY;
+  } else {
+    return currentSeat;
+  }
+}
+
+function getSeatStatusRange1(layout: Status[][], x: number, y: number) {
+  const currentSeat = layout[y][x];
+  const neighbors = adjacentCountRange1(layout, x, y);
+  if (currentSeat === Status.EMPTY && neighbors === 0) {
+    return Status.OCCUPIED;
+  } else if (currentSeat === Status.OCCUPIED && neighbors >= 4) {
+    return Status.EMPTY;
+  } else {
+    return currentSeat;
+  }
+}
+
+function getSeatStatusRangeInfinite(layout: Status[][], x: number, y: number): Status {
   const currentSeat = layout[y][x];
   const neighbors = longRangeAdjacentCount(layout, x, y);
   if (currentSeat === Status.EMPTY && neighbors === 0) {
@@ -121,29 +107,35 @@ function getNewLongRangeSeatStatus(layout: Status[][], x: number, y: number) {
   }
 }
 
-function changePart2Seats(oldLayout: Status[][], didLayoutChange: boolean): Status[][] {
-  if (didLayoutChange === false) {
-    return oldLayout;
-  }
-
-  const newList = oldLayout.map((r) => r.map((c) => c));
-
+function changeSeats(
+  oldLayout: Status[][],
+  seatCheckFunction: (map: Status[][], x: number, y: number) => Status,
+): Status[][] {
   let isChanged = false;
-  oldLayout.forEach((rowValue, y) => {
-    rowValue.forEach((colValue, x) => {
-      const newStatus = getNewLongRangeSeatStatus(oldLayout, x, y);
+  const newList = oldLayout.map((rowValue, y) => {
+    return rowValue.map((colValue, x) => {
+      const newStatus = seatCheckFunction(oldLayout, x, y);
       if (newStatus !== colValue) {
         isChanged = true;
-        newList[y][x] = newStatus;
       }
+      return newStatus;
     });
   });
 
-  return changePart2Seats(newList, isChanged);
+  if (!isChanged) {
+    return oldLayout;
+  }
+  return changeSeats(newList, seatCheckFunction);
+}
+
+function part1(values: string[]): number {
+  return changeSeats(parse(values), getSeatStatusRange1).reduce((total, row) => {
+    return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
+  }, 0);
 }
 
 function part2(values: string[]): number {
-  return changePart2Seats(parse(values), true).reduce((total, row) => {
+  return changeSeats(parse(values), getSeatStatusRangeInfinite).reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
@@ -154,19 +146,8 @@ const test1 = [
   [Status.FLOOR, Status.FLOOR, Status.EMPTY, Status.OCCUPIED],
   [Status.FLOOR, Status.OCCUPIED, Status.EMPTY, Status.EMPTY],
 ];
-// const testFilled = [
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-//   [Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED, Status.OCCUPIED],
-// ];
 
 assert.strictEqual(longRangeAdjacentCount(test1, 1, 0), 3);
-// assert.strictEqual(getNewSeatStatus(testEmpty, 0, 1), Status.OCCUPIED);
-// assert.strictEqual(getNewSeatStatus(testEmpty, 0, 2), Status.OCCUPIED);
-
-// assert.strictEqual(getNewSeatStatus(testFilled, 0, 0), Status.OCCUPIED);
-// assert.strictEqual(getNewSeatStatus(testFilled, 1, 2), Status.EMPTY);
 assert.strictEqual(part1(input), 2346);
 assert.strictEqual(part2(input), 2111);
 
