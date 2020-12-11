@@ -168,6 +168,7 @@ assert.strictEqual(longRangeAdjacentCount(test1, 1, 0), 3);
 // assert.strictEqual(getNewSeatStatus(testFilled, 0, 0), Status.OCCUPIED);
 // assert.strictEqual(getNewSeatStatus(testFilled, 1, 2), Status.EMPTY);
 assert.strictEqual(part1(input), 2346);
+assert.strictEqual(part2(input), 2111);
 
 console.time('Time');
 const resultPart1 = part1(input); // NOT 2723, 2693, 2954, 3809
