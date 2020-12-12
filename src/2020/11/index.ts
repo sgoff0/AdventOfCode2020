@@ -30,6 +30,22 @@ class Vector2 {
   }
 }
 
+class Grid<T> {
+  values: T[][];
+
+  constructor(values: T[][]) {
+    this.values = values;
+  }
+  // constructor(values: string[], parseFunc) {
+  //   // this.values = values;
+  //   this.values = values.map(parseFunc);
+  // }
+
+  // stringToGrid(values: string[], parseFunc) {
+  //   this.values = values.map(parseFunc);
+  // }
+}
+
 const directions = [
   new Vector2(1, 0),
   new Vector2(-1, 0),
@@ -42,11 +58,12 @@ const directions = [
 ];
 
 function parse(values: string[]) {
-  return values.map((row) => row.split('').map((i) => i as Status));
+  const parsed = values.map((row) => row.split('').map((i) => i as Status));
+  return new Grid(parsed);
 }
 
 function isSeatOccupiedInRange(
-  layout: Status[][],
+  layout: Grid<Status>,
   position: Vector2,
   direction: Vector2,
   range: number,
@@ -56,36 +73,36 @@ function isSeatOccupiedInRange(
     return 0;
   }
   const seat = position.add(direction.multiply(depth));
-  if (!seat.inBounds(layout[0].length, layout.length)) {
+  if (!seat.inBounds(layout.values[0].length, layout.values.length)) {
     return 0;
   }
 
-  const currentValue = layout[seat.y][seat.x];
+  const currentValue = layout.values[seat.y][seat.x];
   if (currentValue === Status.FLOOR) {
     return isSeatOccupiedInRange(layout, position, direction, range, depth + 1);
   }
   return currentValue === Status.OCCUPIED ? 1 : 0;
 }
 
-const getOccupiedNeighborCountInRange = (range: number) => (layout: Status[][], p: Vector2) => {
+const getOccupiedNeighborCountInRange = (range: number) => (layout: Grid<Status>, p: Vector2) => {
   return directions.reduce((acc, direction) => acc + isSeatOccupiedInRange(layout, p, direction, range), 0);
 };
 
-const nextTickSeatStatusRange1 = (layout: Status[][], p: Vector2) => {
+const nextTickSeatStatusRange1 = (layout: Grid<Status>, p: Vector2) => {
   return getSeatStatus(getOccupiedNeighborCountInRange(1), layout, p, 4);
 };
-const nextTickSeatStatusRangeInfinite = (layout: Status[][], p: Vector2) => {
-  const maxLength = Math.max(layout.length, layout[0].length);
+const nextTickSeatStatusRangeInfinite = (layout: Grid<Status>, p: Vector2) => {
+  const maxLength = Math.max(layout.values.length, layout.values[0].length);
   return getSeatStatus(getOccupiedNeighborCountInRange(maxLength), layout, p, 5);
 };
 
 function getSeatStatus(
-  getNeighbors: (layout: Status[][], p: Vector2) => number,
-  layout: Status[][],
+  getNeighbors: (layout: Grid<Status>, p: Vector2) => number,
+  layout: Grid<Status>,
   p: Vector2,
   min: number,
 ) {
-  const currentSeat = layout[p.y][p.x];
+  const currentSeat = layout.values[p.y][p.x];
   const neighbors = getNeighbors(layout, p);
   if (currentSeat === Status.EMPTY && neighbors === 0) {
     return Status.OCCUPIED;
@@ -97,11 +114,11 @@ function getSeatStatus(
 }
 
 function changeSeats(
-  oldLayout: Status[][],
-  seatCheckFunction: (map: Status[][], position: Vector2) => Status,
-): Status[][] {
+  oldLayout: Grid<Status>,
+  seatCheckFunction: (map: Grid<Status>, position: Vector2) => Status,
+): Grid<Status> {
   let isChanged = false;
-  const newList = oldLayout.map((rowValue, y) => {
+  const newList = oldLayout.values.map((rowValue, y) => {
     return rowValue.map((colValue, x) => {
       const newStatus = seatCheckFunction(oldLayout, new Vector2(x, y));
       if (newStatus !== colValue) {
@@ -114,19 +131,19 @@ function changeSeats(
   if (!isChanged) {
     return oldLayout;
   }
-  return changeSeats(newList, seatCheckFunction);
+  return changeSeats(new Grid(newList), seatCheckFunction);
 }
 
 function part1(values: string[]): number {
   const layout = parse(values);
-  return changeSeats(layout, nextTickSeatStatusRange1).reduce((total, row) => {
+  return changeSeats(layout, nextTickSeatStatusRange1).values.reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
 
 function part2(values: string[]): number {
   const layout = parse(values);
-  return changeSeats(layout, nextTickSeatStatusRangeInfinite).reduce((total, row) => {
+  return changeSeats(layout, nextTickSeatStatusRangeInfinite).values.reduce((total, row) => {
     return total + row.reduce((rowTotal, val) => rowTotal + (val === Status.OCCUPIED ? 1 : 0), 0);
   }, 0);
 }
@@ -138,7 +155,7 @@ const test1 = [
   [Status.FLOOR, Status.OCCUPIED, Status.EMPTY, Status.EMPTY],
 ];
 
-assert.strictEqual(getOccupiedNeighborCountInRange(5)(test1, new Vector2(1, 0)), 3);
+assert.strictEqual(getOccupiedNeighborCountInRange(5)(new Grid(test1), new Vector2(1, 0)), 3);
 assert.strictEqual(part1(input), 2346);
 assert.strictEqual(part2(input), 2111);
 
