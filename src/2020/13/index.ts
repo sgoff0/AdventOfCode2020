@@ -23,33 +23,34 @@ function findEarliestDepartureAfterTime(busIDs: number[], time: number) {
 }
 
 function part2(values: string[]): number {
-  const data = values[1].split(',');
-  let time = 0; // per rules could probably start at 100000000000000, but just in case leaving 0
-  let step = 1;
-  for (let i = 0; i < data.length; ) {
-    if (data[i] == 'x') i++;
-    else {
-      const busId = parseInt(data[i], 10);
-      if ((time + i) % busId == 0) {
-        // Secret sauce....
-        // Stepping by 1 isn't efficient, this is to find least common multiple (LCM)
-        // Example with demo input:
-        // if stepping by 1 and find time % 7 is 0, new LCM is 7 (1 * 7)
-        // now if stepping by 7 and find time % 13 is 0, new LCM is 91 (7 * 13)
-        // now if stepping by 91 and find time % 59 is 0, next step is 5369 (91 * 59)
-        // and so on... This way I don't have to know LCM function for many numbers AND I can easily start the check on proper index
-        //
-        // Additionally I don't iterate over already calculated indexes, if I know 7 matched at index i, it's going to match at every index i + (n * 7),
-        // likewise if I know 13 passed at index i + 1 (or whatever offset it had if not 1), then it will also pass there every i + 1 + (n * 13).
-        // This is why I can build the LCM over time and be assured it works, in my case n becomes the step between each interation
-        step *= busId;
-        i += 1;
-      } else {
-        time += step;
-      }
-    }
+  const busIDs = values[1].split(',');
+  return findConsecutiveDeparture(busIDs);
+}
+
+/**
+ * Returns answer to the question What is the earliest timestamp such that all of the listed bus IDs depart at offsets matching their positions in the list?
+ *
+ * @param busIDs The list of positions, including 'x's
+ * @param earliestTimestamp Timestamp all buses can leave
+ * @param offset Index of a particular busID in the busIDs list
+ * @param step How far we can jump forward between each check.  The trick here is to build the LCM as we go, each time isBusLeaving is true multiple ID * current step.
+ * Example with demo input when isBusLeaving is true
+ * Step by 1, find 7, now step by 7 (7 * 1)
+ * Step by 7, find 13, now step by 91 (7 * 13)
+ * Step by 91, find 59, now step by 5369 (59 * 91) aka (1 * 7 * 13 * 59)
+ */
+function findConsecutiveDeparture(busIDs: string[], earliestTimestamp = 0, offset = 0, step = 1) {
+  if (offset >= busIDs.length) {
+    return earliestTimestamp;
+  } else if (busIDs[offset] == 'x') {
+    return findConsecutiveDeparture(busIDs, earliestTimestamp, offset + 1, step);
+  } else {
+    const busID = parseInt(busIDs[offset], 10);
+    const isBusLeaving = (earliestTimestamp + offset) % busID === 0;
+    return isBusLeaving
+      ? findConsecutiveDeparture(busIDs, earliestTimestamp, offset + 1, step * busID)
+      : findConsecutiveDeparture(busIDs, earliestTimestamp + step, offset, step);
   }
-  return time;
 }
 
 assert.strictEqual(part1(input), 138);
