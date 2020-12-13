@@ -33,11 +33,7 @@ function part2(values: string[]): number {
  * @param busIDs The list of positions, including 'x's
  * @param earliestTimestamp Timestamp all buses can leave
  * @param offset Index of a particular busID in the busIDs list
- * @param step How far we can jump forward between each check.  The trick here is to build the LCM as we go, each time isBusLeaving is true multiple ID * current step.
- * Example with demo input when isBusLeaving is true
- * Step by 1, find 7, now step by 7 (7 * 1)
- * Step by 7, find 13, now step by 91 (7 * 13)
- * Step by 91, find 59, now step by 5369 (59 * 91) aka (1 * 7 * 13 * 59)
+ * @param step Amount to increment earliestTimestamp by for each failed check.  Trick to problem is to use a variation on LCM of all previous matches.
  */
 function findConsecutiveDeparture(busIDs: string[], earliestTimestamp = 0, offset = 0, step = 1) {
   if (offset >= busIDs.length) {
@@ -55,6 +51,24 @@ function findConsecutiveDeparture(busIDs: string[], earliestTimestamp = 0, offse
 
 assert.strictEqual(part1(input), 138);
 assert.strictEqual(part2(input), 226845233210288);
+
+const demoInput = '7,13,x,x,59,x,31,19'.split(',');
+assert.strictEqual(findConsecutiveDeparture(demoInput), 1068781);
+
+const trickExample1 = '7,13'.split(',');
+assert.strictEqual(findConsecutiveDeparture(trickExample1), 77); // get first position of match
+assert.strictEqual(findConsecutiveDeparture(trickExample1, 78), 168); // get second match
+assert.strictEqual(findConsecutiveDeparture(trickExample1, 78), 7 * 13 + 77); // oh look, second match is just first match + LCM
+assert.strictEqual(findConsecutiveDeparture(trickExample1, 169), 259); // get third match
+assert.strictEqual(findConsecutiveDeparture(trickExample1, 169), 7 * 13 + 168); // Oh nice, third match - second match is LCM too
+assert.strictEqual(findConsecutiveDeparture(trickExample1, 169), 7 * 13 + 7 * 13 + 77); // May as well just step by LCM (7 * 13)
+
+const trickExample2 = '7,13,x,x,59'.split(',');
+assert.strictEqual(findConsecutiveDeparture(trickExample2), 350); // get first position of match
+assert.strictEqual(findConsecutiveDeparture(trickExample2, 351), 5719); // get second second match
+assert.strictEqual(findConsecutiveDeparture(trickExample2, 351), 7 * 13 * 59 + 350); // Same holds true for matching for many numbers and LCM
+assert.strictEqual(findConsecutiveDeparture(trickExample2, 5720), 11088); // get third match
+assert.strictEqual(findConsecutiveDeparture(trickExample2, 5720), 7 * 13 * 59 + 7 * 13 * 59 + 350); // May as well just step by 7 * 13 * 59
 
 console.time('Time');
 const resultPart1 = part1(input);
