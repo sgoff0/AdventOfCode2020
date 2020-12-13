@@ -32,7 +32,7 @@ function part2(values: string[]): number {
       const busId = parseInt(data[i], 10);
       if ((time + i) % busId == 0) {
         // Secret sauce....
-        // Stepping by 1 isn't efficient, this is to find least common multiple (LCM) by brute force
+        // Stepping by 1 isn't efficient, this is to find least common multiple (LCM)
         // Example with demo input:
         // if stepping by 1 and find time % 7 is 0, new LCM is 7 (1 * 7)
         // now if stepping by 7 and find time % 13 is 0, new LCM is 91 (7 * 13)
