@@ -38,6 +38,10 @@ function part2(values: string[]): number {
         // now if stepping by 7 and find time % 13 is 0, new LCM is 91 (7 * 13)
         // now if stepping by 91 and find time % 59 is 0, next step is 5369 (91 * 59)
         // and so on... This way I don't have to know LCM function for many numbers AND I can easily start the check on proper index
+        //
+        // Additionally I don't iterate over already calculated indexes, if I know 7 matched at index i, it's going to match at every index i + (n * 7),
+        // likewise if I know 13 passed at index i + 1 (or whatever offset it had if not 1), then it will also pass there every i + 1 + (n * 13).
+        // This is why I can build the LCM over time and be assured it works, in my case n becomes the step between each interation
         step *= busId;
         i += 1;
       } else {
