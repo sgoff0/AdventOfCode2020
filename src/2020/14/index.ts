@@ -89,8 +89,6 @@ assert.strictEqual(
 );
 assert.strictEqual(fromBinary('000000000000000000000000000001000000'), 64);
 
-// assert.strictEqual(part1(input), 6386593869035);
-
 // assert.strictEqual(part2([1, -1]), 0);
 
 function applyMask2(original: string, mask: string): string {
@@ -120,7 +118,7 @@ function createPermutations(value: string): string[] {
   let existingValues = [value];
   for (let i = 0; i < value.length; i++) {
     if (value[i] === 'X') {
-      console.log('Found match');
+      //   console.log('Found match');
       const temp = [];
       existingValues.forEach((v) => {
         temp.push(replaceAt(v, i, '1'));
@@ -129,7 +127,7 @@ function createPermutations(value: string): string[] {
       existingValues = temp;
     }
   }
-  console.log('Returning: ', existingValues);
+  //   console.log('Returning: ', existingValues);
   return existingValues;
 }
 
@@ -148,11 +146,12 @@ function createPermutations(value: string): string[] {
 // }
 
 function part2(lines: string[]): number {
-  const addresses = new Map();
+  const addresses2 = new Map();
   const re = /mem\[(\d+)\]/;
 
   let mask;
   lines.forEach((line) => {
+    // console.log('Tick');
     const [command, value] = line.split(' = ');
     if (command === 'mask') {
       mask = value;
@@ -164,21 +163,28 @@ function part2(lines: string[]): number {
       const [_, memory] = matches;
 
       //   const masked = applyMask2()
-      const masked = applyMask(toBinary(parseInt(memory, 10)), mask);
+      //   console.log('Mem: ', memory);
+      //   console.log('Mem Bin: ', toBinary(parseInt(memory, 10)));
+      //   console.log('Mask: ', mask);
+      const masked = applyMask2(toBinary(parseInt(memory, 10)), mask);
+      //   console.log('Result: ', masked);
       const permutations = createPermutations(masked);
+      //   console.log(permutations);
 
+      //   console.log(`\nAttempting to write ${value} to memory location ${memory}`);
       permutations.forEach((memoryAddress) => {
         const memoryLoc = fromBinary(memoryAddress);
-        addresses.set(memoryLoc, toBinary(parseInt(value)));
+        const binaryValue = toBinary(parseInt(value));
+        // console.log('V: ', value);
+        // const binaryValue = value;
+        // console.log(`Setting ${binaryValue} to ${memoryLoc}`);
+        addresses2.set(memoryLoc, binaryValue);
       });
-
-      const newValue = applyMask(toBinary(parseInt(value, 10)), mask);
-      addresses.set(memory, newValue);
     }
   });
 
   let sum = 0;
-  addresses.forEach((v, k) => {
+  addresses2.forEach((v, k) => {
     // console.log(`${v} or ${fromBinary(v)} at index ${k}`);
     sum += fromBinary(v);
   });
@@ -188,15 +194,14 @@ function part2(lines: string[]): number {
 const part2DemoMask = '000000000000000000000000000000X1001X';
 assert.strictEqual(applyMask2(toBinary(42), part2DemoMask), '000000000000000000000000000000X1101X'); // first part, still need to process
 
-// assert.strictEqual(createPermutations('000000000000000000000000000000X1101X'), 0);
-// assert.strictEqual(createPermutations('00000000000000000000000000000001X0XX'), 0);
-
 /* Results */
+assert.strictEqual(part1(input), 6386593869035);
+assert.strictEqual(part2(input), 4288986482164);
 
 console.time('Time');
-const resultPart1 = part1(input); // not 3113174009201
+// const resultPart1 = part1(input); // not 3113174009201
 const resultPart2 = part2(input);
 console.timeEnd('Time');
 
-console.log('Solution to part 1:', resultPart1);
+// console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
