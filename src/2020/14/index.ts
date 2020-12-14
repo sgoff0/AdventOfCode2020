@@ -19,18 +19,12 @@ function applyValueMask(original: string, mask: string): string {
   const m = mask.split('');
   return paddedOriginal
     .split('')
-    .map((value, i) => {
-      if (m[i] == 'X') {
-        return value;
-      } else {
-        return m[i];
-      }
-    })
+    .map((value, i) => (m[i] == 'X' ? value : m[i]))
     .join('');
 }
 
 function part1(lines: string[]): number {
-  const addresses = new Map();
+  const addresses: Record<number, string> = {};
   const re = /mem\[(\d+)\]/;
 
   let mask;
@@ -45,15 +39,14 @@ function part1(lines: string[]): number {
       }
       const [_, memory] = matches;
       const newValue = applyValueMask(toBinary(parseInt(value, 10)), mask);
-      addresses.set(memory, newValue);
+      // addresses.set(memory, newValue);
+      addresses[memory] = newValue;
     }
   });
 
-  let sum = 0;
-  addresses.forEach((v) => {
-    sum += fromBinary(v);
-  });
-  return sum;
+  return Object.values(addresses)
+    .map(fromBinary)
+    .reduce((acc, v) => acc + v, 0);
 }
 
 function applyMemoryMask(original: string, mask: string): string {
@@ -108,7 +101,7 @@ function findPermutations(addresses: string[], i = 0): string[] {
 }
 
 function part2(lines: string[]): number {
-  const addresses = new Map();
+  const addresses: Record<number, string> = {};
   const re = /mem\[(\d+)\]/;
 
   let mask;
@@ -128,16 +121,14 @@ function part2(lines: string[]): number {
       permutations.forEach((memoryAddress) => {
         const memoryLoc = fromBinary(memoryAddress);
         const binaryValue = toBinary(parseInt(value));
-        addresses.set(memoryLoc, binaryValue);
+        addresses[memoryLoc] = binaryValue;
       });
     }
   });
 
-  let sum = 0;
-  addresses.forEach((v) => {
-    sum += fromBinary(v);
-  });
-  return sum;
+  return Object.values(addresses)
+    .map(fromBinary)
+    .reduce((acc, v) => acc + v, 0);
 }
 
 /* Tests */
