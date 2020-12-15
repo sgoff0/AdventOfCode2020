@@ -25,9 +25,7 @@ function part1(values: number[], target: number): number[] {
 function part2(values: number[], target: number): number {
   const map = new Map<number, number>();
 
-  const map2 = {};
   values.forEach((v, i) => {
-    map2[v] = i;
     map.set(v, i);
   });
 
