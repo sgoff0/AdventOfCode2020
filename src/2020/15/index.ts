@@ -65,10 +65,12 @@ assert.strictEqual(part2(demoInput, 10), 0);
 console.time('Time');
 const resultPart1 = part1(input, 2020);
 const resultPart2 = part2(input, 30000000);
+const resultPart3 = part1(input, 30000000);
 console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1.slice(-1)[0]);
 console.log('Solution to part 2:', resultPart2);
+console.log('Solution to part 3:', resultPart3.slice(-1)[0]);
 
 assert.strictEqual(resultPart1.slice(-1)[0], 371);
 assert.strictEqual(resultPart2, 352);
