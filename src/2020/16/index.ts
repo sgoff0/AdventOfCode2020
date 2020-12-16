@@ -66,10 +66,7 @@ function part1(values: string[]): number {
       });
     });
 
-  //   console.log('Rules: ', validRanges);
-  //   console.log('Failed: ', failure);
   const sum = failure.reduce((acc, curr) => acc + curr, 0);
-  //   return 0;
   return sum;
 }
 
@@ -83,87 +80,52 @@ function part2(values: string[]): number {
   });
 
   const yours = yoursRaw.split('\n')[1].split(',').map(Number);
-  //   console.log(yours);
 
   const validTickets = nearbyRaw
     .split('\n')
     .slice(1)
     .map((line) => line.split(',').map(Number))
     .filter((ticket) => {
-      return ticket.every((num) => {
-        const isValid = rules.some(({ min, max, min2, max2 }) => {
-          return (num >= min && num <= max) || (num >= min2 && num <= max2);
-        });
-        return isValid;
-      });
+      return ticket.every((num) =>
+        rules.some(({ min, max, min2, max2 }) => (num >= min && num <= max) || (num >= min2 && num <= max2)),
+      );
     });
 
-  //   console.log(validTickets);
+  // Index 0 is an array of all the rules position 0 passes and so on
+  const ticketPositionIndexToRuleIndexes = yours.map((value, ticketPosition) => {
+    return rules
+      .map((rule, ruleIndex) => ({
+        passed: didEveryonePassRuleIndex(validTickets, ticketPosition, ruleIndex, rules),
+        ruleIndex,
+      }))
+      .filter(({ passed }) => passed === true)
+      .map(({ ruleIndex }) => ruleIndex);
+  });
 
-  // Lists of tickets positions containing list of rules matched by index
-  const ticketPositionIndexToRuleIndexes: number[][] = [];
+  const claims = claimRuleForPositions(ticketPositionIndexToRuleIndexes);
 
-  for (let ticketPosition = 0; ticketPosition < yours.length; ticketPosition++) {
-    const ruleIndexesMatched: number[] = [];
-    rules.forEach((rule, ruleIndex) => {
-      const passed = didEveryonePassRuleIndex(validTickets, ticketPosition, ruleIndex, rules);
-      if (passed) {
-        ruleIndexesMatched.push(ruleIndex);
-      }
-    });
-    ticketPositionIndexToRuleIndexes.push(ruleIndexesMatched);
-  }
-
-  // now figure out how we intersect.
-
-  // if length one claim and filter all others
-
-  console.log('All match: ', ticketPositionIndexToRuleIndexes);
-  const resultMap = claim(ticketPositionIndexToRuleIndexes);
-  console.log('Claim: ', resultMap);
-
-  let sum = 1;
-  let mult = 1;
+  let product = 1;
+  // Rules we care about (departure) are index 0 - 5
   for (let i = 0; i < 6; i++) {
-    // console.log('Match on ' + yours[resultMap[i]]);
-    const allPassed = didEveryonePassRuleIndex(validTickets, resultMap[i], i, rules);
-    console.log(
-      `Multiplying ${yours[resultMap[i]]} at position ${
-        resultMap[i]
-      } which matched on rule ${i} since all passed: ${allPassed}`,
-    );
-    mult *= yours[resultMap[i]];
+    product *= yours[claims[i]];
   }
+  //   const product = yours.slice(0, 6).reduce((acc, val, i, array) => (acc *= array[claims[i]]), 1);
 
-  console.log('Final Value: ', mult);
-  sum =
-    yours[resultMap[0]] *
-    yours[resultMap[1]] *
-    yours[resultMap[2]] *
-    yours[resultMap[3]] *
-    yours[resultMap[4]] *
-    yours[resultMap[5]];
-  return sum;
+  return product;
 }
 
-function claim(matches: number[][], resultMap = {}) {
-  let toClaim;
-  let toClaimIndex;
+function claimRuleForPositions(matches: number[][], resultMap = {}) {
+  let claimed = undefined;
   matches.some((value, i) => {
-    // if only one possibility, let it take ownership
     if (value.length == 1) {
-      toClaim = value[0];
-      toClaimIndex = i;
+      claimed = { ruleIndex: value[0], ticketPosition: i };
       return true;
     }
   });
 
-  if (toClaim != null) {
-    // Remove anyone else who has claim now that it is taken
-    // resultMap[toClaimIndex] = toClaim;
-    resultMap[toClaim] = toClaimIndex;
-    const removed = matches.map((numbers) => numbers.filter((value) => value != toClaim));
-    return claim(removed, resultMap);
+  if (claimed !== undefined) {
+    const removed = matches.map((numbers) => numbers.filter((value) => value != claimed.ruleIndex));
+    return claimRuleForPositions(removed, { ...resultMap, [claimed.ruleIndex]: claimed.ticketPosition });
   } else {
     return resultMap;
   }
@@ -182,17 +144,14 @@ function didEveryonePassRuleIndex(
   });
 }
 
-/* Tests */
-
-// assert.strictEqual(part1(input), 23054);
-
-// part 2 not 61, nor 952, nor 12483296203723
+assert.strictEqual(part1(input), 23054);
+assert.strictEqual(part2(input), 51240700105297);
 /* Results */
 
 console.time('Time');
-// const resultPart1 = part1(input);
+const resultPart1 = part1(input);
 const resultPart2 = part2(input);
 console.timeEnd('Time');
 
-// console.log('Solution to part 1:', resultPart1);
+console.log('Solution to part 1:', resultPart1);
 console.log('Solution to part 2:', resultPart2);
