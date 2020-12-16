@@ -13,7 +13,6 @@ type MinMax = {
 type MinMaxPosition = {
   min: number;
   max: number;
-  //   index: number;
   min2: number;
   max2: number;
 };
@@ -29,7 +28,7 @@ function part1(values: string[]): number {
     if (match) {
       const [_, min1, max1, min2, max2] = match;
       rules.push({ min: parseInt(min1, 10), max: parseInt(max1, 10) });
-      rules.push({ min: +min2, max: +max2 });
+      rules.push({ min: +min2, max: +max2 }); // shorter syntax to translate string to number
     }
   });
 
@@ -55,7 +54,7 @@ function part1(values: string[]): number {
 function part2(values: string[]): number {
   const [rulesRaw, yoursRaw, nearbyRaw] = values;
 
-  const rules: MinMaxPosition[] = rulesRaw.split('\n').map((line, i) => {
+  const rules: MinMaxPosition[] = rulesRaw.split('\n').map((line) => {
     const match = re.exec(line);
     const [_, min1, max1, min2, max2] = match;
     return { min: +min1, max: +max1, min2: +min2, max2: +max2 };
@@ -74,7 +73,7 @@ function part2(values: string[]): number {
     });
 
   // As an example array n is array of numbers represnting position n.  The second array are all the rules (by index) passed by this positon.
-  const ticketPositionIndexToRuleIndexes = yours.map((value, ticketPosition) => {
+  const ticketPositionIndexToRuleIndexes = yours.map((_, ticketPosition) => {
     return rules
       .map((rule, ruleIndex) => ({
         passed: didEveryonePassRuleIndex(validTickets, ticketPosition, ruleIndex, rules),
@@ -90,11 +89,12 @@ function part2(values: string[]): number {
   return yours.slice(0, 6).reduce((acc, val, i) => (acc *= yours[claims[i]]), 1);
 }
 
+// return map of rule indexes as key mapping to ticket position index as value
 function claimRuleForPositions(matches: number[][], resultMap = {}) {
   let claimed = undefined;
-  matches.some((value, i) => {
-    if (value.length == 1) {
-      claimed = { ruleIndex: value[0], ticketPosition: i };
+  matches.some((values, i) => {
+    if (values.length === 1) {
+      claimed = { ruleIndex: values[0], ticketPosition: i };
       return true;
     }
   });
