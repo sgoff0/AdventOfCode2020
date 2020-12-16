@@ -10,11 +10,6 @@ type MinMax = {
   min: number;
   max: number;
 };
-type MinMaxIndex = {
-  min: number;
-  max: number;
-  index: number;
-};
 type MinMaxPosition = {
   min: number;
   max: number;
@@ -26,7 +21,6 @@ type MinMaxPosition = {
 const re = /\s(\d+)-(\d+) or (\d+)-(\d+)$/;
 function part1(values: string[]): number {
   const [rulesRaw, yoursRaw, nearby] = values;
-  //   console.log(rules);
 
   const rules: MinMax[] = [];
 
@@ -34,40 +28,28 @@ function part1(values: string[]): number {
     const match = re.exec(line);
     if (match) {
       const [_, min1, max1, min2, max2] = match;
-      //   console.log(`Found ${min1} to ${max1} and ${min2} to ${max2}`);
-      //   validRanges.push({ min: parseInt(min1, 10), max: parseInt(max1, 10) });
-      //   validRanges.push({ min: +min2, max: +max2 });
       rules.push({ min: parseInt(min1, 10), max: parseInt(max1, 10) });
       rules.push({ min: +min2, max: +max2 });
     }
   });
 
-  // yours ignore for now
-
   const failure = [];
   nearby
     .split('\n')
     .slice(1)
-    .forEach((line) => {
-      //   console.log(line);
-      const numbers = line.split(',').map(Number);
-      //   console.log(numbers);
-      const passes = false;
-
+    .map((line) => line.split(',').map(Number))
+    .forEach((numbers) => {
       numbers.forEach((num) => {
-        // check if number passes at least 1, if not add to fail list
         const isValid = rules.some(({ min, max }) => {
           return num >= min && num <= max;
         });
-        // console.log(`Num ${num} isValid: ${isValid}`);
         if (!isValid) {
           failure.push(num);
         }
       });
     });
 
-  const sum = failure.reduce((acc, curr) => acc + curr, 0);
-  return sum;
+  return failure.reduce((acc, curr) => acc + curr, 0);
 }
 
 function part2(values: string[]): number {
@@ -91,7 +73,7 @@ function part2(values: string[]): number {
       );
     });
 
-  // Index 0 is an array of all the rules position 0 passes and so on
+  // As an example array n is array of numbers represnting position n.  The second array are all the rules (by index) passed by this positon.
   const ticketPositionIndexToRuleIndexes = yours.map((value, ticketPosition) => {
     return rules
       .map((rule, ruleIndex) => ({
@@ -104,14 +86,8 @@ function part2(values: string[]): number {
 
   const claims = claimRuleForPositions(ticketPositionIndexToRuleIndexes);
 
-  let product = 1;
   // Rules we care about (departure) are index 0 - 5
-  for (let i = 0; i < 6; i++) {
-    product *= yours[claims[i]];
-  }
-  //   const product = yours.slice(0, 6).reduce((acc, val, i, array) => (acc *= array[claims[i]]), 1);
-
-  return product;
+  return yours.slice(0, 6).reduce((acc, val, i) => (acc *= yours[claims[i]]), 1);
 }
 
 function claimRuleForPositions(matches: number[][], resultMap = {}) {
