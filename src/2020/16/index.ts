@@ -100,8 +100,8 @@ function claimRuleForPositions(matches: number[][], resultMap = {}) {
   });
 
   if (claimed !== undefined) {
-    const removed = matches.map((numbers) => numbers.filter((value) => value != claimed.ruleIndex));
-    return claimRuleForPositions(removed, { ...resultMap, [claimed.ruleIndex]: claimed.ticketPosition });
+    const matchesAfterRemoval = matches.map((numbers) => numbers.filter((value) => value != claimed.ruleIndex));
+    return claimRuleForPositions(matchesAfterRemoval, { ...resultMap, [claimed.ruleIndex]: claimed.ticketPosition });
   } else {
     return resultMap;
   }
