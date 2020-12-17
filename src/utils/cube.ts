@@ -15,8 +15,8 @@ export class Vector3 {
     return new Vector3(this.x * val, this.y * val, this.z * val);
   }
 
-  inBounds(maxX: number, maxY: number, maxZ: number): boolean {
-    return this.x >= 0 && this.y >= 0 && this.z >= 0 && this.x < maxX && this.y < maxY && this.z < maxZ;
+  inBounds(min: number, max: number): boolean {
+    return this.x >= min && this.y >= min && this.z >= min && this.x < max && this.y < max && this.z < max;
   }
 
   toString() {
@@ -50,7 +50,7 @@ export class Cube<T> {
             noOffsetY < initial.length &&
             noOffsetX < initial[noOffsetY].length
           ) {
-            console.log(`Pushing ${initial[noOffsetY][noOffsetX]} to ` + new Vector3(x, y, z, this.offset));
+            // console.log(`Pushing ${initial[noOffsetY][noOffsetX]} to ` + new Vector3(x, y, z, this.offset));
             this.values[z][y][x] = initial[noOffsetY][noOffsetX];
           } else {
             // console.log('Pushing empty state to ' + new Vector3(x, y, z));
@@ -61,12 +61,95 @@ export class Cube<T> {
     }
   }
 
-  getVector(position: Vector3): T {
-    return this.values[position.y][position.x][position.z];
+  public cycle(active: T, inactive: T): void {
+    for (let noOffsetZ = -this.offset; noOffsetZ < this.offset; noOffsetZ++) {
+      for (let noOffsetY = -this.offset; noOffsetY < this.offset; noOffsetY++) {
+        // retVal += this.values[noOffsetZ + this.offset][noOffsetY + this.offset].join(',') + '\n';
+        for (let noOffsetX = -this.offset; noOffsetX < this.offset; noOffsetX++) {
+          const position = new Vector3(noOffsetX, noOffsetY, noOffsetZ);
+          const activeNeighbors = this.getNeighborsOfType(new Vector3(noOffsetX, noOffsetY, noOffsetZ), active);
+          switch (this.get(position)) {
+            case active: {
+              if (activeNeighbors === 2 || activeNeighbors === 3) {
+                // remain active
+              } else {
+                this.set(position, inactive);
+              }
+            }
+            case inactive: {
+              if (activeNeighbors === 3) {
+                // become active
+                this.set(position, active);
+              }
+            }
+            default:
+              break;
+          }
+          // console.log(
+          //   'Value: ',
+          //   this.values[noOffsetZ + this.offset][noOffsetY + this.offset][noOffsetX + this.offset],
+          // );
+        }
+      }
+
+      // retVal.push(this.values[noOffsetZ]);
+    }
   }
-  get(x: number, y: number, z: number): T {
-    return this.values[y][x][z];
+  getCountOfType(status: T): number {
+    let count = 0;
+
+    for (let noOffsetZ = -this.offset; noOffsetZ < this.offset; noOffsetZ++) {
+      for (let noOffsetY = -this.offset; noOffsetY < this.offset; noOffsetY++) {
+        for (let noOffsetX = -this.offset; noOffsetX < this.offset; noOffsetX++) {
+          const position = new Vector3(noOffsetX, noOffsetY, noOffsetZ);
+          count += this.get(position) === status ? 1 : 0;
+        }
+      }
+    }
+    return count;
   }
+
+  getNeighborsOfType(position: Vector3, value: T): number {
+    return this.getNeighbors().reduce((acc, neighbor) => {
+      const newPostion = neighbor.add(position);
+      if (!newPostion.inBounds(-this.offset, this.offset)) {
+        return acc;
+      } else {
+        const match = this.get(neighbor.add(position)) === value ? 1 : 0;
+        return acc + match;
+      }
+    }, 0);
+  }
+
+  getNeighbors(): Vector3[] {
+    const neighbors: Vector3[] = [];
+
+    for (let z = -1; z <= 1; z++) {
+      for (let y = -1; y <= 1; y++) {
+        for (let x = -1; x <= 1; x++) {
+          if (z === 0 && y === 0 && x === 0) {
+            // skip me
+          } else {
+            neighbors.push(new Vector3(x, y, z));
+          }
+        }
+      }
+    }
+
+    return neighbors;
+  }
+
+  get(position: Vector3): T {
+    // console.log('Attempting to read position ' + (position.z + this.offset));
+    return this.values[position.z + this.offset][position.y + this.offset][position.x + this.offset];
+  }
+
+  set(position: Vector3, value: T): void {
+    this.values[position.z + this.offset][position.y + this.offset][position.x + this.offset] = value;
+  }
+  // get(x: number, y: number, z: number): T {
+  //   return this.values[y][x][z];
+  // }
 
   // maxX(): number {
   //   return this.values[0].length;
@@ -89,6 +172,19 @@ export class Cube<T> {
       });
     });
   }
+
+  public toString = (): string => {
+    let retVal = '';
+    for (let noOffsetZ = -this.offset; noOffsetZ < this.offset; noOffsetZ++) {
+      for (let noOffsetY = -this.offset; noOffsetY < this.offset; noOffsetY++) {
+        retVal += this.values[noOffsetZ + this.offset][noOffsetY + this.offset].join(',') + '\n';
+      }
+
+      // retVal.push(this.values[noOffsetZ]);
+    }
+    //   // // return `(${this.x}, ${this.y}, ${this.z})`;
+    return retVal;
+  };
 }
 
 // export const directions = [
