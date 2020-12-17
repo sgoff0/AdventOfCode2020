@@ -62,6 +62,8 @@ export class Cube<T> {
   }
 
   public cycle(active: T, inactive: T): void {
+    const positionsToSetActive: Vector3[] = [];
+    const positionsToSetInactive: Vector3[] = [];
     for (let noOffsetZ = -this.offset; noOffsetZ < this.offset; noOffsetZ++) {
       for (let noOffsetY = -this.offset; noOffsetY < this.offset; noOffsetY++) {
         // retVal += this.values[noOffsetZ + this.offset][noOffsetY + this.offset].join(',') + '\n';
@@ -73,13 +75,16 @@ export class Cube<T> {
               if (activeNeighbors === 2 || activeNeighbors === 3) {
                 // remain active
               } else {
-                this.set(position, inactive);
+                // this.set(position, inactive);
+                positionsToSetInactive.push(position);
               }
             }
             case inactive: {
               if (activeNeighbors === 3) {
+                console.log(`At ${position}, setting to active due to ${activeNeighbors}`);
                 // become active
-                this.set(position, active);
+                // this.set(position, active);
+                positionsToSetActive.push(position);
               }
             }
             default:
@@ -94,6 +99,12 @@ export class Cube<T> {
 
       // retVal.push(this.values[noOffsetZ]);
     }
+    positionsToSetActive.forEach((position) => {
+      this.set(position, active);
+    });
+    positionsToSetInactive.forEach((position) => {
+      this.set(position, inactive);
+    });
   }
   getCountOfType(status: T): number {
     let count = 0;
@@ -173,11 +184,15 @@ export class Cube<T> {
     });
   }
 
-  public toString = (): string => {
+  public toString = (status?: T): string => {
     let retVal = '';
     for (let noOffsetZ = -this.offset; noOffsetZ < this.offset; noOffsetZ++) {
-      for (let noOffsetY = -this.offset; noOffsetY < this.offset; noOffsetY++) {
-        retVal += this.values[noOffsetZ + this.offset][noOffsetY + this.offset].join(',') + '\n';
+      if (this.values[noOffsetZ + this.offset].some((y) => y.some((x) => x === status))) {
+        // Print row
+        retVal += `z = ${noOffsetZ}\n`;
+        for (let noOffsetY = -this.offset; noOffsetY < this.offset; noOffsetY++) {
+          retVal += this.values[noOffsetZ + this.offset][noOffsetY + this.offset].join(',') + '\n';
+        }
       }
 
       // retVal.push(this.values[noOffsetZ]);

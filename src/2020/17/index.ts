@@ -46,6 +46,15 @@ assert.strictEqual(dummyCube.getNeighborsOfType(new Vector3(2, 1, 0), Status.ACT
 assert.strictEqual(dummyCube.getNeighborsOfType(new Vector3(0, 2, 0), Status.ACTIVE), 1);
 assert.strictEqual(dummyCube.getNeighborsOfType(new Vector3(1, 2, 0), Status.ACTIVE), 3);
 assert.strictEqual(dummyCube.getNeighborsOfType(new Vector3(2, 2, 0), Status.ACTIVE), 2);
+
+// 0
+// console.log(dummyCube.toString());
+// console.log('Cycle 0 \n' + dummyCube.toString(Status.ACTIVE));
+// assert.strictEqual(dummyCube.getCountOfType(Status.ACTIVE), 5);
+// dummyCube.cycle(Status.ACTIVE, Status.INACTIVE);
+// console.log('Cycle 1 \n' + dummyCube.toString(Status.ACTIVE));
+// assert.strictEqual(dummyCube.getCountOfType(Status.ACTIVE), 11);
+
 // assert.strictEqual(part1([1, 1, 1]), 0);
 // assert.strictEqual(part1([1, 1, 1]), 0);
 
