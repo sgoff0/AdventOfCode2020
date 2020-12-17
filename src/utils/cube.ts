@@ -74,6 +74,7 @@ export class Cube<T> {
             case active: {
               if (activeNeighbors === 2 || activeNeighbors === 3) {
                 // remain active
+                // positionsToSetActive.push(position);
               } else {
                 // this.set(position, inactive);
                 positionsToSetInactive.push(position);
@@ -81,7 +82,7 @@ export class Cube<T> {
             }
             case inactive: {
               if (activeNeighbors === 3) {
-                console.log(`At ${position}, setting to active due to ${activeNeighbors}`);
+                // console.log(`At ${position}, setting to active due to ${activeNeighbors}`);
                 // become active
                 // this.set(position, active);
                 positionsToSetActive.push(position);
@@ -99,11 +100,11 @@ export class Cube<T> {
 
       // retVal.push(this.values[noOffsetZ]);
     }
-    positionsToSetActive.forEach((position) => {
-      this.set(position, active);
-    });
     positionsToSetInactive.forEach((position) => {
       this.set(position, inactive);
+    });
+    positionsToSetActive.forEach((position) => {
+      this.set(position, active);
     });
   }
   getCountOfType(status: T): number {
