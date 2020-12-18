@@ -15,13 +15,11 @@ function parse(input: string): string[] {
  * @param values string array of values & operations, parens already filtered out
  */
 function doMathNoParens(values: string[]): number {
-  return values
-    .filter((v, i) => i % 2 == 0)
-    .slice(1)
-    .reduce((prev, curr, i) => {
-      const operatorIndex = (i + 1) * 2 - 1;
-      return values[operatorIndex] === '+' ? prev + +curr : prev * +curr;
-    }, +values[0]);
+  let result = +values[0];
+  for (let i = 2; i < values.length; i += 2) {
+    result = values[i - 1] === '+' ? result + +values[i] : result * +values[i];
+  }
+  return result;
 }
 
 /**
@@ -105,11 +103,13 @@ console.log('Solution to part 2:', resultPart2);
 
 // Alternative part 1 math functions
 // function doMathNoParensAlt1(values: string[]): string {
-//   let currentValue = parseInt(values[0], 10);
-//   for (let i = 2; i < values.length; i += 2) {
-//     currentValue = values[i - 1] === '+' ? currentValue + +values[i] : currentValue * +values[i];
-//   }
-//   return currentValue + '';
+// return values
+//   .filter((v, i) => i % 2 == 0)
+//   .slice(1)
+//   .reduce((prev, curr, i) => {
+//     const operatorIndex = (i + 1) * 2 - 1;
+//     return values[operatorIndex] === '+' ? prev + +curr : prev * +curr;
+//   }, +values[0]);
 // }
 
 // function doMathNoParensAlt2(values: string[]): string {
