@@ -29,14 +29,14 @@ function doMathNoParens(values: string[]): number {
  * New in part2
  * @param values
  */
-function additionBeforeMult(values: string[]): number {
+function doMathNoParensAdditionFirst(values: string[]): number {
   if (values.length === 1) {
     return +values[0];
   }
   const i = values.findIndex((val) => val === '+');
   if (i >= 0) {
     const reduced = doMathNoParens(values.slice(i - 1, i + 2));
-    return additionBeforeMult([...values.slice(0, i - 1), reduced.toString(), ...values.slice(i + 2)]);
+    return doMathNoParensAdditionFirst([...values.slice(0, i - 1), reduced.toString(), ...values.slice(i + 2)]);
   } else {
     return doMathNoParens(values);
   }
@@ -78,7 +78,7 @@ function part2(values: string[]): number {
 }
 
 function equationToAnswerPart2(input: string): number {
-  return additionBeforeMult(flatten(parse(input), additionBeforeMult));
+  return doMathNoParensAdditionFirst(flatten(parse(input), doMathNoParensAdditionFirst));
 }
 
 /* Tests */
