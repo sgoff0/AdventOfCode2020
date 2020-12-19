@@ -35,29 +35,29 @@ function isMessageValid(ruleMap: Map<string, string>, ruleSegment: string, messa
 // }
 let cacheHit = 0;
 
-function getRuleMessageMatchCount(ruleMap: Map<string, string>, ruleSegment: string, message: string): number {
+function getRuleMessageMatchCount(
+  ruleMap: Map<string, string>,
+  ruleSegment: string,
+  message: string,
+  depth = 0,
+): number {
   const match = /"(\w+)"/.exec(ruleSegment);
   if (match) {
     return message[0] === match[1] ? 1 : 0;
+  } else if (depth > 100) {
+    // brute force way to abort?
+    return 0;
   } else {
-    // const ruleKey = `${ruleSegment}:${message}`;
-    // if (cache.has(ruleKey)) {
-    //   return cache.get(ruleKey);
-    // } else {
     const ruleValue = ruleSegment
       .split(' | ')
       .map((segment) => {
-        // const segmentKey = `${segment}:${message}`;
-        // if (cache.has(segmentKey)) {
-        //   return cache.get(segmentKey);
-        // } else {
         const segmentValue = segment.split(' ').reduce((acc, curr, i, array) => {
           const key = `${curr}:${message.slice(acc)}`;
           if (cache.has(key)) {
             cacheHit += 1;
             return acc + cache.get(key);
           } else {
-            const matchCount = getRuleMessageMatchCount(ruleMap, ruleMap.get(curr), message.slice(acc));
+            const matchCount = getRuleMessageMatchCount(ruleMap, ruleMap.get(curr), message.slice(acc), depth + 1);
             cache.set(key, matchCount);
             if (matchCount === 0) {
               array.splice(0, array.length); // ugly hack to early return early by removing all elements from array we're reducing
@@ -65,14 +65,10 @@ function getRuleMessageMatchCount(ruleMap: Map<string, string>, ruleSegment: str
             return acc + matchCount;
           }
         }, 0);
-        // cache.set(segmentKey, segmentValue);
         return segmentValue;
-        // }
       })
       .reduce((prev, curr) => Math.max(prev, curr));
-    // cache.set(ruleKey, ruleValue);
     return ruleValue;
-    // }
   }
 }
 
@@ -107,10 +103,10 @@ assert.strictEqual(isMessageValid(ruleMap, '0', 'aaaabbb'), false);
 console.time('Time');
 cacheHit = 0;
 const resultPart1 = part1(rawInput);
-// const resultPart2 = part2(rawInput);
+const resultPart2 = part2(rawInput);
 console.timeEnd('Time');
 console.log('Cache Hits: ', cacheHit);
 
 console.log('Solution to part 1:', resultPart1);
-// console.log('Solution to part 2:', resultPart2);
+console.log('Solution to part 2:', resultPart2); // 458 is too high
 assert.strictEqual(part1(rawInput), 182);
