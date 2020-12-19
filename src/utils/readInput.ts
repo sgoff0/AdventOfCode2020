@@ -10,3 +10,8 @@ export default function () {
   // const file = path.join(path.dirname(getCallerFile()), 'daveInput.txt');
   return readFileSync(file).toString();
 }
+
+export function readDemoInput() {
+  const file = path.join(path.dirname(getCallerFile()), 'demoInput.txt');
+  return readFileSync(file).toString();
+}

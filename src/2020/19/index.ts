@@ -1,25 +1,24 @@
-import readInput from '../../utils/readInput';
+import readInput, { readDemoInput } from '../../utils/readInput';
 import assert from 'assert';
 
 const rawInput = readInput();
-const [rules, messages] = rawInput.split('\n\n');
+const demoInput = readDemoInput();
 
 /* Functions */
 
-function parseRules() {
+function parseRules(raw: string) {
   const ruleMap = new Map<string, string>();
+  const [rules, messages] = raw.split('\n\n');
   rules.split('\n').forEach((value) => {
     const [key, ruleText] = value.split(': ');
     ruleMap.set(key, ruleText);
   });
-  return ruleMap;
+  return { ruleMap, messages: messages.split('\n') };
 }
 
-function part1(rulesToParse: string, messagesToParse: string): number {
-  const ruleMap = parseRules();
-  return messagesToParse
-    .split('\n')
-    .reduce((acc, message) => acc + (isMessageValid(ruleMap, ruleMap.get('0'), message) ? 1 : 0), 0);
+function part1(raw: string): number {
+  const { ruleMap, messages } = parseRules(raw);
+  return messages.reduce((acc, message) => acc + (isMessageValid(ruleMap, ruleMap.get('0'), message) ? 1 : 0), 0);
 }
 
 function isMessageValid(ruleMap: Map<string, string>, ruleSegment: string, message: string): boolean {
@@ -53,22 +52,20 @@ function part2(values: number[]): number {
 
 /* Tests */
 
-// const ruleMap = parseRules();
-// assert.strictEqual(processRuleHelper(ruleMap, '0', 'ababbb'), true);
-// assert.strictEqual(processRuleHelper(ruleMap, '0', 'abbbab'), true);
-// assert.strictEqual(processRuleHelper(ruleMap, '0', 'bababa'), false);
-// assert.strictEqual(processRuleHelper(ruleMap, '0', 'aaabbb'), false);
-// assert.strictEqual(processRuleHelper(ruleMap, '0', 'aaaabbb'), false);
-
-// assert.strictEqual(part2([1, -1]), 0);
+const { ruleMap } = parseRules(demoInput);
+assert.strictEqual(isMessageValid(ruleMap, '0', 'ababbb'), true);
+assert.strictEqual(isMessageValid(ruleMap, '0', 'abbbab'), true);
+assert.strictEqual(isMessageValid(ruleMap, '0', 'bababa'), false);
+assert.strictEqual(isMessageValid(ruleMap, '0', 'aaabbb'), false);
+assert.strictEqual(isMessageValid(ruleMap, '0', 'aaaabbb'), false);
 
 /* Results */
 
 console.time('Time');
-const resultPart1 = part1(rules, messages);
+const resultPart1 = part1(rawInput);
 // const resultPart2 = part2(input);
 console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1);
 // console.log('Solution to part 2:', resultPart2);
-assert.strictEqual(part1(rules, messages), 182);
+assert.strictEqual(part1(rawInput), 182);
