@@ -46,8 +46,11 @@ function getRuleMessageMatchCount(
   }
 }
 
-function part2(values: number[]): number {
-  return 0;
+function part2(raw: string): number {
+  const { ruleMap, messages } = parseRules(raw);
+  ruleMap.set('8', '42 | 42 8');
+  ruleMap.set('11', '42 31 | 42 11 31');
+  return messages.reduce((acc, message) => acc + (isMessageValid(ruleMap, ruleMap.get('0'), message) ? 1 : 0), 0);
 }
 
 /* Tests */
@@ -63,7 +66,7 @@ assert.strictEqual(isMessageValid(ruleMap, '0', 'aaaabbb'), false);
 
 console.time('Time');
 const resultPart1 = part1(rawInput);
-// const resultPart2 = part2(input);
+// const resultPart2 = part2(rawInput);
 console.timeEnd('Time');
 
 console.log('Solution to part 1:', resultPart1);
