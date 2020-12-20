@@ -1,3 +1,5 @@
+import { allowedNodeEnvironmentFlags } from 'process';
+
 export class Vector2 {
   x: number;
   y: number;
@@ -16,6 +18,17 @@ export class Vector2 {
   inBounds(maxX: number, maxY: number): boolean {
     return this.x >= 0 && this.y >= 0 && this.x < maxX && this.y < maxY;
   }
+
+  toString() {
+    return `(x: ${this.x}, y: ${this.y})`;
+  }
+}
+
+export enum Direction {
+  North,
+  East,
+  South,
+  West,
 }
 
 export class Grid<T> {
@@ -50,6 +63,59 @@ export class Grid<T> {
         return cb(new Vector2(x, y), colValue);
       });
     });
+  }
+
+  rotateCounterClockwise() {
+    const xLength = this.maxX();
+    this.values = this.map((position, value) => {
+      return this.get(xLength - 1 - position.y, position.x);
+    });
+  }
+
+  // Rotate clockwise
+  rotate() {
+    const xLength = this.maxX();
+    const yLength = this.maxY();
+    // this.values = this.map((position, value) => {
+    //   // return this.get(xLength - 1 - position.y, position.x);
+    //   return this.get(position.y, yLength - 1 - position.x);
+    // });
+    return this.map((position, value) => {
+      // return this.get(xLength - 1 - position.y, position.x);
+      return this.get(position.y, yLength - 1 - position.x);
+    });
+  }
+
+  // alignsCurry(direction: Direction) {
+  //   return function (grid: Grid<T>): boolean {
+  //     return this.aligns(direction, grid);
+  //   };
+  // }
+
+  alignsCurry(direction: Direction) {
+    return function (grid: Grid<T>): boolean {
+      return this.aligns(direction, grid);
+    };
+  }
+
+  // aligns(grid: Grid<T>, direction: Direction) {
+  alignsXWardWith(direction: Direction, grid: Grid<T>): boolean {
+    switch (direction) {
+      case Direction.North: {
+        return this.values[0].join('') === grid.values[grid.maxY() - 1].join('');
+      }
+      case Direction.South: {
+        return grid.values[0].join('') === this.values[this.maxY() - 1].join('');
+      }
+      case Direction.East: {
+        return grid.values.map((y) => y[0]).join('') === this.values.map((y) => y[this.maxX() - 1]).join('');
+      }
+      case Direction.West: {
+        return this.values.map((y) => y[0]).join('') === grid.values.map((y) => y[grid.maxX() - 1]).join('');
+      }
+      default:
+        return false;
+    }
   }
 }
 
