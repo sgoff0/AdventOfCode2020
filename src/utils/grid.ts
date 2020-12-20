@@ -67,7 +67,7 @@ export class Grid<T> {
 
   rotateCounterClockwise() {
     const xLength = this.maxX();
-    this.values = this.map((position, value) => {
+    return this.map((position, value) => {
       return this.get(xLength - 1 - position.y, position.x);
     });
   }
@@ -81,7 +81,6 @@ export class Grid<T> {
     //   return this.get(position.y, yLength - 1 - position.x);
     // });
     return this.map((position, value) => {
-      // return this.get(xLength - 1 - position.y, position.x);
       return this.get(position.y, yLength - 1 - position.x);
     });
   }
@@ -111,6 +110,7 @@ export class Grid<T> {
         return grid.values.map((y) => y[0]).join('') === this.values.map((y) => y[this.maxX() - 1]).join('');
       }
       case Direction.West: {
+        // console.log('does: ', );
         return this.values.map((y) => y[0]).join('') === grid.values.map((y) => y[grid.maxX() - 1]).join('');
       }
       default:
