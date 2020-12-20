@@ -80,9 +80,24 @@ export class Grid<T> {
     //   // return this.get(xLength - 1 - position.y, position.x);
     //   return this.get(position.y, yLength - 1 - position.x);
     // });
-    return this.map((position, value) => {
-      return this.get(position.y, yLength - 1 - position.x);
-    });
+    return new Grid(
+      this.map((position, value) => {
+        return this.get(position.y, yLength - 1 - position.x);
+      }),
+    );
+  }
+  flipOnYPlane() {
+    const xLength = this.maxX();
+    const yLength = this.maxY();
+    // this.values = this.map((position, value) => {
+    //   // return this.get(xLength - 1 - position.y, position.x);
+    //   return this.get(position.y, yLength - 1 - position.x);
+    // });
+    return new Grid(
+      this.map((position, value) => {
+        return this.get(xLength - 1 - position.x, position.y);
+      }),
+    );
   }
 
   // alignsCurry(direction: Direction) {

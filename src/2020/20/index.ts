@@ -8,9 +8,9 @@ const demoInput = readDemoInput();
 /* Functions */
 
 type KeyedGrid = {
-    title: string,
-    grid: Grid<string>
-}
+  title: string;
+  grid: Grid<string>;
+};
 
 // insides dont' matter
 function part1(values: string): number {
@@ -40,7 +40,7 @@ function part1(values: string): number {
   const retVal = alignGrid(
     [],
     // grids.map((v) => v.grid),
-    grids
+    grids,
     size,
   );
   console.log('RV: ', retVal);
@@ -68,37 +68,37 @@ function part1(values: string): number {
 // }
 
 // Only check trailing orientations as I try to move forward, e.g. never check east or south
-function getOrientationsToProcess(grid: Grid<string>, size: number, position: Vector2) {
-  const toProcess = [];
-  if (position.x !== 0) {
-    toProcess.push(grid.alignsCurry(Direction.West));
-  }
-  if (position.y !== 0) {
-    toProcess.push(grid.alignsCurry(Direction.North));
-    //   checkNorth = false;
-  }
-  //   if (position.y !== size - 1) {
-  //     toProcess.push(grid.alignsCurry(Direction.South));
-  //     //   checkSouth = false;
-  //   }
-  //   if (position.x !== size - 1) {
-  //     toProcess.push(grid.alignsCurry(Direction.East));
-  //     //   checkEast = false;
-  //   }
-  return toProcess;
-}
+// function getOrientationsToProcess(grid: Grid<string>, size: number, position: Vector2) {
+//   const toProcess = [];
+//   if (position.x !== 0) {
+//     toProcess.push(grid.alignsCurry(Direction.West));
+//   }
+//   if (position.y !== 0) {
+//     toProcess.push(grid.alignsCurry(Direction.North));
+//     //   checkNorth = false;
+//   }
+//   //   if (position.y !== size - 1) {
+//   //     toProcess.push(grid.alignsCurry(Direction.South));
+//   //     //   checkSouth = false;
+//   //   }
+//   //   if (position.x !== size - 1) {
+//   //     toProcess.push(grid.alignsCurry(Direction.East));
+//   //     //   checkEast = false;
+//   //   }
+//   return toProcess;
+// }
 
 // ONLY rotate one grid
-function canMatch(f: (a: Grid<string>) => boolean, nextGrid: Grid<string>): boolean {
-  let toCheck = nextGrid;
-  for (let i = 0; i < 4; i++) {
-    if (f(toCheck)) {
-      return true;
-    }
-    toCheck = new Grid(toCheck.rotate());
-  }
-  return false;
-}
+// function canMatch(f: (a: Grid<string>) => boolean, nextGrid: Grid<string>): boolean {
+//   let toCheck = nextGrid;
+//   for (let i = 0; i < 4; i++) {
+//     if (f(toCheck)) {
+//       return true;
+//     }
+//     toCheck = new Grid(toCheck.rotate());
+//   }
+//   return false;
+// }
 
 /**
  * Store Grid of chosen decisions, check backwards then commit
@@ -110,61 +110,81 @@ function canMatch(f: (a: Grid<string>) => boolean, nextGrid: Grid<string>): bool
  * @param size
  * @param depth
  */
-function alignGrid(decisions: Grid<string>[] = [], gridsRemaining: Grid<string>[], size: number, depth = 0) {
+function alignGrid(decisions: KeyedGrid[] = [], gridsRemaining: KeyedGrid[], size: number, depth = 0) {
   const x = depth % size;
   const y = Math.floor(depth / size);
-
-  if (depth == 8) {
-    console.log('D: ', decisions.length);
-    console.log('D: ', gridsRemaining.length);
-  }
   if (gridsRemaining.length == 0) {
     return true;
   }
-  //   if (depth == ) {
-  //     console.log('Depth : ' + depth);
-  //   }
   // If I pass all checks, move forward
   // check every grid
   return gridsRemaining.some((rawGrid, i) => {
     // Get every orientation of this grid
-    const grid1 = new Grid(rawGrid.values);
-    const grid2 = new Grid(grid1.rotate());
-    const grid3 = new Grid(grid2.rotate());
-    const grid4 = new Grid(grid3.rotate());
+    const grid1 = new Grid(rawGrid.grid.values);
+    const grid2 = grid1.rotate();
+    const grid3 = grid2.rotate();
+    const grid4 = grid3.rotate();
+    const grid5 = grid1.flipOnYPlane();
+    const grid6 = grid5.rotate();
+    const grid7 = grid6.rotate();
+    const grid8 = grid7.rotate();
+    // DIDN"T SEE FLIP OMG
+
     // filter it passed matching rules on previous
-    return [grid1, grid2, grid3, grid4]
-      .filter((grid) => {
-        if (depth == 8) {
-          console.log(grid);
-        }
-        if (x !== 0) {
-          // must verify west
-          if (!grid.alignsXWardWith(Direction.West, decisions[depth - 1])) {
-            return false;
+    return (
+      //   [grid1]
+      [grid1, grid2, grid3, grid4, grid5, grid6, grid7, grid8]
+        .filter((grid, i) => {
+          // if (depth == 8) {
+          //   console.log(rawGrid.title);
+          //   console.log(grid);
+          // }
+          if (x !== 0) {
+            // must verify west
+            //   if (depth == 8 && (i == 4 || i == 0)) {
+            //     console.log(`Comparing ${rawGrid.title} westward to ${decisions[depth - 1].title}`);
+            //     console.log(`Them ${decisions[depth - 1].grid}`);
+            //     console.log(decisions[depth - 1].grid);
+            //     console.log(`Me ${rawGrid.grid}`);
+            //     console.log(rawGrid.grid);
+            //     console.log('\n');
+            //   }
+            if (!grid.alignsXWardWith(Direction.West, decisions[depth - 1].grid)) {
+              return false;
+            }
           }
-        }
-        if (y !== 0) {
-          // must verify north
-          // north would be decision depth - size
-          if (!grid.alignsXWardWith(Direction.North, decisions[depth - size])) {
-            return false;
+          if (y !== 0) {
+            // must verify north
+            // north would be decision depth - size
+            if (depth == 8) {
+              console.log(`Comparing ${rawGrid.title} northward to ${decisions[depth - size].title}`);
+            }
+            if (!grid.alignsXWardWith(Direction.North, decisions[depth - size].grid)) {
+              return false;
+            }
           }
-        }
-        return true;
-      })
-      .some((gridOrientation) => {
-        // Mark it as if it is a passing decision and call w/ remaining options
-        // const newDecision = {
-        //   ...decisions,
-        //   depth: gridOrientation,
-        // };
-        const newDecision = [...decisions, gridOrientation];
-        const otherGrids = [...gridsRemaining.slice(0, i), ...gridsRemaining.slice(i + 1)];
-        return alignGrid(newDecision, otherGrids, size, depth + 1);
-      });
+          return true;
+        })
+        .some((gridOrientation: Grid<string>) => {
+          const newDecision = [...decisions, { title: rawGrid.title, grid: gridOrientation }];
+          const otherGrids = [...gridsRemaining.slice(0, i), ...gridsRemaining.slice(i + 1)];
+          return alignGrid(newDecision, otherGrids, size, depth + 1);
+        })
+    );
   });
 }
+
+const testGrid = new Grid([
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+]);
+
+assert.deepStrictEqual(testGrid, new Grid(testGrid.values));
+assert.deepStrictEqual(testGrid, new Grid(testGrid.values).rotate().rotate().rotate().rotate());
+assert.deepStrictEqual(testGrid, new Grid(testGrid.values).flipOnYPlane().flipOnYPlane());
+
+console.log(testGrid);
 
 function part2(values: number[]): number {
   return 0;
@@ -174,4 +194,5 @@ function part2(values: number[]): number {
 // console.log('Solution to part 2:', resultPart2);
 
 part1(demoInput);
-console.log('Done');
+// part1(rawInput);
+// console.log('Done');
