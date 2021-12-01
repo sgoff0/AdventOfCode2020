@@ -11,10 +11,10 @@ export default {
       message: 'What year?',
       validate: (value) => {
         const valueAsInt = Number(value);
-        if (Number.isInteger(valueAsInt) && valueAsInt >= 2015 && valueAsInt <= 2020) {
+        if (Number.isInteger(valueAsInt) && valueAsInt >= 2015 && valueAsInt <= 2021) {
           return true;
         }
-        return 'Must be a valid year between 2015 and 2020';
+        return 'Must be a valid year between 2015 and 2021';
       },
     },
     {
